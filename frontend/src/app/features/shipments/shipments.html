@@ -1,0 +1,340 @@
+
+<div class="space-y-6">
+
+  <!-- Page Heading -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Shipments</h1>
+      <p class="text-sm text-slate-500 mt-1">
+        Manage and track all courier shipments.
+      </p>
+    </div>
+
+    <button
+      (click)="openCreateForm()"
+      class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition">
+      + Create Shipment
+    </button>
+  </div>
+
+  <!-- Create Shipment Form -->
+  @if (showCreateForm) {
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-800">
+            Create New Shipment
+          </h2>
+          <p class="text-sm text-slate-500">
+            Enter shipment details below.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          (click)="closeCreateForm()"
+          class="text-slate-400 hover:text-red-500 text-xl">
+          ✕
+        </button>
+      </div>
+
+      <form (ngSubmit)="createShipment()" class="space-y-5">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              Merchant
+            </label>
+            <input
+              type="text"
+              name="merchant"
+              [(ngModel)]="shipment.merchant"
+              required
+              placeholder="Enter merchant name"
+              class="w-full border border-slate-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              Customer
+            </label>
+            <input
+              type="text"
+              name="customer"
+              [(ngModel)]="shipment.customer"
+              required
+              placeholder="Enter customer name"
+              class="w-full border border-slate-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              Origin Branch
+            </label>
+            <input
+              type="text"
+              name="originBranch"
+              [(ngModel)]="shipment.originBranch"
+              required
+              placeholder="Enter origin branch"
+              class="w-full border border-slate-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              Destination Branch
+            </label>
+            <input
+              type="text"
+              name="destinationBranch"
+              [(ngModel)]="shipment.destinationBranch"
+              required
+              placeholder="Enter destination branch"
+              class="w-full border border-slate-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              Shipment Description
+            </label>
+            <input
+              type="text"
+              name="description"
+              [(ngModel)]="shipment.description"
+              required
+              placeholder="Enter shipment description"
+              class="w-full border border-slate-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              Weight (KG)
+            </label>
+            <input
+              type="number"
+              name="weight"
+              [(ngModel)]="shipment.weight"
+              required
+              min="0.1"
+              step="0.1"
+              placeholder="Enter weight"
+              class="w-full border border-slate-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              COD Amount
+            </label>
+            <input
+              type="number"
+              name="codAmount"
+              [(ngModel)]="shipment.codAmount"
+              min="0"
+              placeholder="Enter COD amount"
+              class="w-full border border-slate-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              Shipping Charges
+            </label>
+            <input
+              type="number"
+              name="shippingCharges"
+              [(ngModel)]="shipment.shippingCharges"
+              required
+              min="0"
+              placeholder="Enter shipping charges"
+              class="w-full border border-slate-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">
+              Expected Delivery
+            </label>
+            <input
+              type="date"
+              name="expectedDelivery"
+              [(ngModel)]="shipment.expectedDelivery"
+              required
+              class="w-full border border-slate-300 rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+        </div>
+
+        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button
+            type="button"
+            (click)="closeCreateForm()"
+            class="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50">
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="px-5 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+            Create Shipment
+          </button>
+        </div>
+
+      </form>
+    </div>
+  }
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-sm text-slate-500">Total Shipments</p>
+      <h3 class="text-2xl font-bold text-slate-800 mt-2">1,248</h3>
+      <p class="text-xs text-blue-600 mt-2">All registered shipments</p>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-sm text-slate-500">Booked</p>
+      <h3 class="text-2xl font-bold text-blue-600 mt-2">185</h3>
+      <p class="text-xs text-slate-500 mt-2">Newly booked shipments</p>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-sm text-slate-500">In Transit</p>
+      <h3 class="text-2xl font-bold text-purple-600 mt-2">320</h3>
+      <p class="text-xs text-slate-500 mt-2">Currently moving</p>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-sm text-slate-500">Delivered</p>
+      <h3 class="text-2xl font-bold text-green-600 mt-2">690</h3>
+      <p class="text-xs text-slate-500 mt-2">Successfully delivered</p>
+    </div>
+
+  </div>
+
+  <!-- Shipments Table -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+
+    <div class="p-5 border-b border-slate-200">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
+        <div>
+          <h2 class="text-lg font-semibold text-slate-800">
+            All Shipments
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">
+            Search and filter shipment records.
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3">
+
+          <!-- Search -->
+          <input
+            type="text"
+            name="searchTerm"
+            [(ngModel)]="searchTerm"
+            placeholder="Search shipment..."
+            class="border border-slate-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+
+          <!-- Status Filter -->
+          <select
+            name="selectedStatus"
+            [(ngModel)]="selectedStatus"
+            class="border border-slate-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+
+            <option value="All">All Statuses</option>
+            <option value="Booked">Booked</option>
+            <option value="In Transit">In Transit</option>
+            <option value="Delivered">Delivered</option>
+            <option value="Failed">Failed</option>
+
+          </select>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+
+      <table class="w-full text-sm text-left">
+
+        <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+          <tr>
+            <th class="px-6 py-4">Tracking Number</th>
+            <th class="px-6 py-4">Customer</th>
+            <th class="px-6 py-4">Merchant</th>
+            <th class="px-6 py-4">Route</th>
+            <th class="px-6 py-4">Booking Date</th>
+            <th class="px-6 py-4">Status</th>
+            <th class="px-6 py-4">Action</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100">
+
+          @for (shipment of filteredShipments; track shipment.tracking) {
+
+            <tr class="hover:bg-slate-50 transition">
+
+              <td class="px-6 py-4 font-medium text-blue-600">
+                {{ shipment.tracking }}
+              </td>
+
+              <td class="px-6 py-4 text-slate-700">
+                {{ shipment.customer }}
+              </td>
+
+              <td class="px-6 py-4 text-slate-700">
+                {{ shipment.merchant }}
+              </td>
+
+              <td class="px-6 py-4 text-slate-600">
+                {{ shipment.origin }} → {{ shipment.destination }}
+              </td>
+
+              <td class="px-6 py-4 text-slate-600">
+                {{ shipment.date }}
+              </td>
+
+              <td class="px-6 py-4">
+                <span
+                  [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getStatusClass(shipment.status)">
+                  {{ shipment.status }}
+                </span>
+              </td>
+
+      <td class="px-6 py-4">
+  <a
+    [routerLink]="['/shipment-tracking']"
+    [queryParams]="{ tracking: shipment.tracking }"
+    class="text-blue-600 hover:text-blue-800 font-medium">
+    Track →
+  </a>
+</td>
+
+            </tr>
+
+          } @empty {
+
+            <tr>
+              <td colspan="7" class="px-6 py-10 text-center text-slate-500">
+                No shipments found.
+              </td>
+            </tr>
+
+          }
+
+        </tbody>
+
+      </table>
+    </div>
+
+    <div class="px-6 py-4 border-t border-slate-100 text-sm text-slate-500">
+      Showing {{ filteredShipments.length }} of {{ shipments.length }} shipments
+    </div>
+
+  </div>
+
+</div>

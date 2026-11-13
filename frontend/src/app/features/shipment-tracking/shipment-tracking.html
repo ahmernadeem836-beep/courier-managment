@@ -1,0 +1,245 @@
+
+<div class="space-y-6">
+
+  <!-- Page Heading -->
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800">Shipment Tracking</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      Track shipment movement and view its complete delivery journey.
+    </p>
+  </div>
+
+  <!-- Search Section -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+    <h2 class="text-lg font-semibold text-slate-800 mb-2">
+      Track Your Shipment
+    </h2>
+
+    <p class="text-sm text-slate-500 mb-5">
+      Enter a tracking number to view shipment details.
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-3">
+      <input
+        type="text"
+        name="searchTracking"
+        [(ngModel)]="searchTracking"
+        (keyup.enter)="searchShipment()"
+        placeholder="Enter tracking number..."
+        class="flex-1 border border-slate-300 rounded-lg px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+
+      <button
+        type="button"
+        (click)="searchShipment()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-7 py-3 rounded-lg text-sm font-medium transition">
+        Track Shipment
+      </button>
+    </div>
+  </div>
+
+  <!-- Shipment Information -->
+  @if (shipment) {
+
+    <!-- Current Status -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+        <div>
+          <p class="text-sm text-slate-500">Tracking Number</p>
+          <h2 class="text-xl font-bold text-blue-600 mt-1">
+            {{ shipment.tracking }}
+          </h2>
+        </div>
+
+        <div>
+          <span
+            [class]="'inline-flex px-4 py-2 rounded-full text-sm font-semibold ' + getStatusClass(shipment.status)">
+            {{ shipment.status }}
+          </span>
+        </div>
+
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-7 pt-6 border-t border-slate-100">
+
+        <div>
+          <p class="text-xs text-slate-500 uppercase">Origin</p>
+          <p class="font-semibold text-slate-800 mt-2">
+            {{ shipment.origin }}
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs text-slate-500 uppercase">Destination</p>
+          <p class="font-semibold text-slate-800 mt-2">
+            {{ shipment.destination }}
+          </p>
+        </div>
+
+        <div>
+          <p class="text-xs text-slate-500 uppercase">Expected Delivery</p>
+          <p class="font-semibold text-slate-800 mt-2">
+            {{ shipment.expectedDelivery }}
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Shipment Details + Timeline -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+      <!-- Shipment Details -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+
+        <h2 class="text-lg font-semibold text-slate-800 mb-6">
+          Shipment Details
+        </h2>
+
+        <div class="space-y-5">
+
+          <div>
+            <p class="text-xs text-slate-500">Customer</p>
+            <p class="text-sm font-medium text-slate-800 mt-1">
+              {{ shipment.customer }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-slate-500">Merchant</p>
+            <p class="text-sm font-medium text-slate-800 mt-1">
+              {{ shipment.merchant }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-slate-500">Booking Date</p>
+            <p class="text-sm font-medium text-slate-800 mt-1">
+              {{ shipment.bookingDate }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-slate-500">Weight</p>
+            <p class="text-sm font-medium text-slate-800 mt-1">
+              {{ shipment.weight }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-slate-500">Payment Type</p>
+            <p class="text-sm font-medium text-slate-800 mt-1">
+              {{ shipment.paymentType }}
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs text-slate-500">COD Amount</p>
+            <p class="text-sm font-semibold text-slate-800 mt-1">
+              {{ shipment.amount }}
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Tracking Timeline -->
+      <div class="xl:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+
+        <div class="mb-7">
+          <h2 class="text-lg font-semibold text-slate-800">
+            Shipment Journey
+          </h2>
+          <p class="text-sm text-slate-500 mt-1">
+            Complete history of shipment movement.
+          </p>
+        </div>
+
+        <div class="space-y-0">
+
+          @for (event of timeline; track event.title; let last = $last) {
+
+            <div class="flex gap-4">
+
+              <!-- Timeline Indicator -->
+              <div class="flex flex-col items-center">
+
+                <div
+                  [class]="event.completed
+                    ? 'w-9 h-9 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold'
+                    : 'w-9 h-9 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center font-bold'">
+
+                  @if (event.completed) {
+                    ✓
+                  } @else {
+                    ·
+                  }
+
+                </div>
+
+                @if (!last) {
+                  <div
+                    [class]="event.completed
+                      ? 'w-0.5 h-16 bg-green-300'
+                      : 'w-0.5 h-16 bg-slate-200'">
+                  </div>
+                }
+
+              </div>
+
+              <!-- Timeline Content -->
+              <div class="flex-1 pb-8">
+
+                <div class="flex flex-col sm:flex-row sm:justify-between gap-2">
+
+                  <h3
+                    [class]="event.completed
+                      ? 'font-semibold text-slate-800'
+                      : 'font-semibold text-slate-400'">
+                    {{ event.title }}
+                  </h3>
+
+                  <span class="text-xs text-slate-500">
+                    {{ event.date }} · {{ event.time }}
+                  </span>
+
+                </div>
+
+                <p class="text-sm text-slate-600 mt-1">
+                  {{ event.location }}
+                </p>
+
+                <p class="text-xs text-slate-500 mt-1">
+                  {{ event.description }}
+                </p>
+
+              </div>
+
+            </div>
+
+          }
+
+        </div>
+
+      </div>
+
+    </div>
+
+  } @else {
+
+    <div class="bg-white rounded-xl border border-slate-200 p-10 text-center">
+      <div class="text-4xl mb-3">📦</div>
+      <h2 class="text-lg font-semibold text-slate-800">
+        No Shipment Found
+      </h2>
+      <p class="text-sm text-slate-500 mt-2">
+        Enter a valid tracking number to view shipment information.
+      </p>
+    </div>
+
+  }
+
+</div>
