@@ -176,11 +176,52 @@ export const createShipment = async (req: Request, res: Response) => {
 };
 
 
+
+
 export const getAllShipments = async (
     req: Request,
     res: Response
 ) => {
     try {
+        const userId = req.user?.userId;
+
+        if (!userId) {
+            return res.status(401).json({
+                message: "Authentication required"
+            });
+        }
+
+        // 1. Check Customer role and linked customer profile
+        const [customerRows] = await pool.execute<RowDataPacket[]>(
+            `SELECT c.customer_id
+             FROM user_roles ur
+             JOIN roles r ON ur.role_id = r.role_id
+             LEFT JOIN customers c
+                ON c.user_id = ur.user_id
+                AND c.is_active = TRUE
+             WHERE ur.user_id = ?
+             AND r.role_name = 'Customer'
+             LIMIT 1`,
+            [userId]
+        );
+
+        const conditions: string[] = [];
+        const params: (string | number)[] = [];
+
+        // 2. Restrict Customer to their own shipments
+        const customer = customerRows[0];
+
+        if (customer) {
+            if (customer.customer_id == null) {
+                return res.status(403).json({
+                    message: "Customer profile not found or inactive"
+                });
+            }
+
+            conditions.push("s.customer_id = ?");
+            params.push(Number(customer.customer_id));
+        }
+
         const {
             status,
             tracking_number,
@@ -188,14 +229,19 @@ export const getAllShipments = async (
             customer_id
         } = req.query;
 
-        const page = Math.max(1, Number(req.query.page) || 1);
-        const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 10));
+        const page = Math.max(
+            1,
+            Number(req.query.page) || 1
+        );
+
+        const limit = Math.min(
+            100,
+            Math.max(1, Number(req.query.limit) || 10)
+        );
+
         const offset = (page - 1) * limit;
 
-        const conditions: string[] = [];
-        const params: (string | number)[] = [];
-
-        // Filter by status
+        // 3. Filter by status
         if (status) {
             if (typeof status !== "string") {
                 return res.status(400).json({
@@ -207,7 +253,7 @@ export const getAllShipments = async (
             params.push(status);
         }
 
-        // Search by tracking number
+        // 4. Search by tracking number
         if (tracking_number) {
             if (typeof tracking_number !== "string") {
                 return res.status(400).json({
@@ -219,7 +265,7 @@ export const getAllShipments = async (
             params.push(`%${tracking_number}%`);
         }
 
-        // Filter by merchant
+        // 5. Filter by merchant
         if (merchant_id) {
             const merchantId = Number(merchant_id);
 
@@ -233,7 +279,7 @@ export const getAllShipments = async (
             params.push(merchantId);
         }
 
-        // Filter by customer
+        // 6. Filter by customer
         if (customer_id) {
             const customerId = Number(customer_id);
 
@@ -251,18 +297,18 @@ export const getAllShipments = async (
             ? `WHERE ${conditions.join(" AND ")}`
             : "";
 
-        // Get total matching shipments
-        const [countRows]: any = await pool.execute(
+        // 7. Get total matching shipments
+        const [countRows] = await pool.execute<RowDataPacket[]>(
             `SELECT COUNT(*) AS total
              FROM shipments s
              ${whereClause}`,
             params
         );
 
-        const total = Number(countRows[0].total);
+        const total = Number(countRows[0]?.total ?? 0);
 
-        // Get paginated shipment records
-        const [rows]: any = await pool.execute(
+        // 8. Get paginated shipment records
+        const [rows] = await pool.execute<RowDataPacket[]>(
             `SELECT
                 s.*,
                 m.business_name,
@@ -299,6 +345,7 @@ export const getAllShipments = async (
         });
     }
 };
+
 
 
 // GET SHIPMENT BY TRACKING NUMBER

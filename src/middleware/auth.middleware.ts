@@ -1,9 +1,11 @@
 
 import type { Request, Response, NextFunction } from "express";
+import type { RowDataPacket } from "mysql2";
 import jwt from "jsonwebtoken";
+import pool from "../config/database.js";
 
-interface JwtPayload {
-    userId: number;
+interface ActiveUserRow extends RowDataPacket {
+    is_active: number;
 }
 
 declare global {
@@ -16,7 +18,7 @@ declare global {
     }
 }
 
-export const authenticateToken = (
+export const authenticateToken = async (
     req: Request,
     res: Response,
     next: NextFunction
@@ -42,11 +44,36 @@ export const authenticateToken = (
         const decoded = jwt.verify(token, secret);
 
         if (
-            typeof decoded === "string" ||
-            typeof decoded.userId !== "number"
+            typeof decoded !== "object" ||
+            decoded === null ||
+            typeof decoded.userId !== "number" ||
+            !Number.isInteger(decoded.userId) ||
+            decoded.userId <= 0
         ) {
             return res.status(401).json({
                 message: "Invalid token payload"
+            });
+        }
+
+        const [rows] = await pool.execute<ActiveUserRow[]>(
+            `SELECT is_active
+             FROM users
+             WHERE user_id = ?
+             LIMIT 1`,
+            [decoded.userId]
+        );
+
+        const user = rows[0];
+
+        if (!user) {
+            return res.status(401).json({
+                message: "User account not found"
+            });
+        }
+
+        if (!user.is_active) {
+            return res.status(403).json({
+                message: "Account is inactive"
             });
         }
 
@@ -54,11 +81,22 @@ export const authenticateToken = (
             userId: decoded.userId
         };
 
-        next();
+        return next();
 
-    } catch {
-        return res.status(401).json({
-            message: "Invalid or expired token"
+    } catch (error) {
+        if (
+            error instanceof jwt.JsonWebTokenError ||
+            error instanceof jwt.TokenExpiredError
+        ) {
+            return res.status(401).json({
+                message: "Invalid or expired token"
+            });
+        }
+
+        console.error("Authentication error:", error);
+
+        return res.status(500).json({
+            message: "Authentication failed"
         });
     }
 };

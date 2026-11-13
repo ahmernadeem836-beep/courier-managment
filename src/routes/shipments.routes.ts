@@ -130,7 +130,7 @@ router.use(authenticateToken);
  *       403:
  *         description: Permission denied
  */
-router.get("/", requirePermission("view_shipments"), getAllShipments);
+
 
 router.get("/", requirePermission("view_shipments"), getAllShipments);
 router.post(
