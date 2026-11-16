@@ -1,0 +1,337 @@
+
+<div class="space-y-6">
+
+  <!-- Page Heading -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Dispatch Management</h1>
+      <p class="text-sm text-slate-500 mt-1">
+        Manage shipment dispatches, vehicles and riders.
+      </p>
+    </div>
+
+    <button
+      (click)="openDispatchForm()"
+      class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition">
+      + Create Dispatch
+    </button>
+  </div>
+
+  <!-- Create Dispatch Form -->
+  @if (showDispatchForm) {
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-lg font-semibold text-slate-800">Create New Dispatch</h2>
+
+        <button
+          (click)="closeDispatchForm()"
+          class="text-slate-500 hover:text-red-600 text-xl">
+          &times;
+        </button>
+      </div>
+
+      <form (ngSubmit)="createDispatch()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Tracking Number *
+          </label>
+          <input
+            type="text"
+            name="trackingNumber"
+            [(ngModel)]="dispatchForm.trackingNumber"
+            placeholder="Enter tracking number"
+            required
+            class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Origin Branch *
+          </label>
+          <input
+            type="text"
+            name="origin"
+            [(ngModel)]="dispatchForm.origin"
+            placeholder="Enter origin branch"
+            required
+            class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Destination Branch *
+          </label>
+          <input
+            type="text"
+            name="destination"
+            [(ngModel)]="dispatchForm.destination"
+            placeholder="Enter destination branch"
+            required
+            class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Vehicle Number
+          </label>
+          <input
+            type="text"
+            name="vehicle"
+            [(ngModel)]="dispatchForm.vehicle"
+            placeholder="e.g. LEA-1234"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Assigned Rider
+          </label>
+          <input
+            type="text"
+            name="rider"
+            [(ngModel)]="dispatchForm.rider"
+            placeholder="Enter rider name"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">
+            Dispatch Date *
+          </label>
+          <input
+            type="date"
+            name="dispatchDate"
+            [(ngModel)]="dispatchForm.dispatchDate"
+            required
+            class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="md:col-span-2 lg:col-span-3 flex justify-end gap-3 mt-2">
+          <button
+            type="button"
+            (click)="closeDispatchForm()"
+            class="px-5 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50">
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium">
+            Create Dispatch
+          </button>
+        </div>
+
+      </form>
+    </div>
+  }
+
+  <!-- Statistics Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-sm text-slate-500">Total Dispatches</p>
+      <h2 class="text-3xl font-bold text-slate-800 mt-2">{{ totalDispatches }}</h2>
+      <p class="text-xs text-slate-400 mt-2">All dispatch records</p>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-sm text-slate-500">Pending</p>
+      <h2 class="text-3xl font-bold text-amber-600 mt-2">{{ pendingDispatches }}</h2>
+      <p class="text-xs text-slate-400 mt-2">Awaiting dispatch</p>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-sm text-slate-500">Dispatched</p>
+      <h2 class="text-3xl font-bold text-blue-600 mt-2">{{ dispatchedCount }}</h2>
+      <p class="text-xs text-slate-400 mt-2">Successfully dispatched</p>
+    </div>
+
+    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-sm text-slate-500">In Transit</p>
+      <h2 class="text-3xl font-bold text-green-600 mt-2">{{ inTransitCount }}</h2>
+      <p class="text-xs text-slate-400 mt-2">Moving to destination</p>
+    </div>
+
+  </div>
+
+  <!-- Dispatch Workflow -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+    <h2 class="text-lg font-semibold text-slate-800 mb-5">Dispatch Workflow</h2>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+      <div class="bg-amber-50 border border-amber-100 rounded-lg p-4 text-center">
+        <div class="text-2xl mb-2">📦</div>
+        <h3 class="font-semibold text-amber-800">Pending</h3>
+        <p class="text-xs text-amber-700 mt-1">Shipment awaiting dispatch</p>
+      </div>
+
+      <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 text-center">
+        <div class="text-2xl mb-2">🚚</div>
+        <h3 class="font-semibold text-blue-800">Dispatched</h3>
+        <p class="text-xs text-blue-700 mt-1">Vehicle has left the branch</p>
+      </div>
+
+      <div class="bg-green-50 border border-green-100 rounded-lg p-4 text-center">
+        <div class="text-2xl mb-2">🛣️</div>
+        <h3 class="font-semibold text-green-800">In Transit</h3>
+        <p class="text-xs text-green-700 mt-1">Shipment is on its way</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Dispatch Records -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+
+    <div class="p-5 border-b border-slate-200">
+      <h2 class="text-lg font-semibold text-slate-800">Dispatch Records</h2>
+      <p class="text-sm text-slate-500 mt-1">View and manage all dispatch records.</p>
+
+      <div class="flex flex-col md:flex-row gap-3 mt-4">
+
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Search tracking number, branch or rider..."
+          class="flex-1 border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+
+        <select
+          [(ngModel)]="selectedStatus"
+          class="border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="All">All Statuses</option>
+          <option value="Pending">Pending</option>
+          <option value="Dispatched">Dispatched</option>
+          <option value="In Transit">In Transit</option>
+        </select>
+
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+
+        <thead class="bg-slate-50 text-slate-600">
+          <tr>
+            <th class="px-5 py-4 font-semibold">Dispatch ID</th>
+            <th class="px-5 py-4 font-semibold">Tracking Number</th>
+            <th class="px-5 py-4 font-semibold">Route</th>
+            <th class="px-5 py-4 font-semibold">Vehicle</th>
+            <th class="px-5 py-4 font-semibold">Rider</th>
+            <th class="px-5 py-4 font-semibold">Dispatch Date</th>
+            <th class="px-5 py-4 font-semibold">Status</th>
+            <th class="px-5 py-4 font-semibold">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100">
+
+          @for (dispatch of filteredDispatches; track dispatch.dispatchId) {
+            <tr class="hover:bg-slate-50">
+
+              <td class="px-5 py-4 font-medium text-slate-800">
+                {{ dispatch.dispatchId }}
+              </td>
+
+              <td class="px-5 py-4 text-blue-600 font-medium whitespace-nowrap">
+                {{ dispatch.trackingNumber }}
+              </td>
+
+              <td class="px-5 py-4 min-w-48">
+                <p class="text-slate-800">{{ dispatch.origin }}</p>
+                <p class="text-xs text-slate-400 mt-1">to {{ dispatch.destination }}</p>
+              </td>
+
+              <td class="px-5 py-4">
+  @if (dispatch.status === 'Pending') {
+    <select
+      [(ngModel)]="dispatch.vehicle"
+      [ngModelOptions]="{standalone: true}"
+      class="border border-slate-300 rounded-lg px-2 py-2 text-xs w-32">
+      <option value="Not Assigned">Not Assigned</option>
+      <option value="LEA-1234">LEA-1234</option>
+      <option value="LEB-5678">LEB-5678</option>
+      <option value="LEC-9012">LEC-9012</option>
+    </select>
+  } @else {
+    <span class="whitespace-nowrap">{{ dispatch.vehicle }}</span>
+  }
+</td>
+
+              <td class="px-5 py-4">
+  @if (dispatch.status === 'Pending') {
+    <select
+      [(ngModel)]="dispatch.rider"
+      [ngModelOptions]="{standalone: true}"
+      class="border border-slate-300 rounded-lg px-2 py-2 text-xs w-36">
+      <option value="Not Assigned">Not Assigned</option>
+      <option value="Ali Ahmed">Ali Ahmed</option>
+      <option value="Usman Malik">Usman Malik</option>
+      <option value="Ahmed Khan">Ahmed Khan</option>
+    </select>
+  } @else {
+    <span class="whitespace-nowrap">{{ dispatch.rider }}</span>
+  }
+</td>
+
+              <td class="px-5 py-4 whitespace-nowrap text-slate-600">
+                {{ dispatch.dispatchDate }}
+              </td>
+
+              <td class="px-5 py-4">
+                <span
+                  class="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
+                  [class]="getStatusClass(dispatch.status)">
+                  {{ dispatch.status }}
+                </span>
+              </td>
+
+              <td class="px-5 py-4">
+                <div class="flex flex-col gap-2 min-w-36">
+
+                  @if (dispatch.status === 'Pending') {
+                    <button
+                      (click)="confirmDispatch(dispatch.dispatchId)"
+                      class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium">
+                      Confirm Dispatch
+                    </button>
+                  }
+
+                  @if (dispatch.status === 'Dispatched') {
+                    <button
+                      (click)="markInTransit(dispatch.dispatchId)"
+                      class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-xs font-medium">
+                      Mark In Transit
+                    </button>
+                  }
+
+                  @if (dispatch.status === 'In Transit') {
+                    <span class="text-xs text-green-700 font-medium">
+                      In Transit
+                    </span>
+                  }
+
+                </div>
+              </td>
+
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="8" class="px-5 py-10 text-center text-slate-500">
+                No dispatch records found.
+              </td>
+            </tr>
+          }
+
+        </tbody>
+      </table>
+    </div>
+
+    <div class="px-5 py-4 border-t border-slate-200 text-sm text-slate-500">
+      Showing {{ filteredDispatches.length }} of {{ dispatches.length }} dispatches
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,272 @@
+
+<div class="space-y-6">
+
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Returns Management</h1>
+      <p class="text-sm text-slate-500 mt-1">
+        Manage shipment return requests and their processing workflow.
+      </p>
+    </div>
+
+    <button
+      (click)="openReturnForm()"
+      class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
+      + Create Return
+    </button>
+  </div>
+
+  <!-- Create Return Form -->
+  @if (showReturnForm) {
+    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+      <div class="flex justify-between items-center mb-5">
+        <h2 class="text-lg font-semibold text-slate-800">New Return Request</h2>
+        <button (click)="closeReturnForm()" class="text-slate-400 hover:text-slate-700 text-xl">×</button>
+      </div>
+
+      <form (ngSubmit)="createReturn()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Tracking Number *</label>
+          <input
+            type="text"
+            name="trackingNumber"
+            [(ngModel)]="returnForm.trackingNumber"
+            required
+            placeholder="Enter tracking number"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Customer Name *</label>
+          <input
+            type="text"
+            name="customer"
+            [(ngModel)]="returnForm.customer"
+            required
+            placeholder="Enter customer name"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Merchant *</label>
+          <input
+            type="text"
+            name="merchant"
+            [(ngModel)]="returnForm.merchant"
+            required
+            placeholder="Enter merchant name"
+            class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Return Reason *</label>
+          <select
+            name="reason"
+            [(ngModel)]="returnForm.reason"
+            required
+            class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+            <option value="">Select reason</option>
+            <option value="Customer Refused">Customer Refused</option>
+            <option value="Wrong Item">Wrong Item</option>
+            <option value="Damaged Item">Damaged Item</option>
+            <option value="Customer Changed Mind">Customer Changed Mind</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="md:col-span-2 flex justify-end gap-3 pt-2">
+          <button
+            type="button"
+            (click)="closeReturnForm()"
+            class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+            Submit Return
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- KPI Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+
+    <div class="bg-white rounded-xl border border-slate-200 p-5">
+      <p class="text-sm text-slate-500">Total Returns</p>
+      <h2 class="text-2xl font-bold text-slate-800 mt-2">{{ totalReturns }}</h2>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 p-5">
+      <p class="text-sm text-slate-500">Requested</p>
+      <h2 class="text-2xl font-bold text-amber-600 mt-2">{{ requestedReturns }}</h2>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 p-5">
+      <p class="text-sm text-slate-500">Approved</p>
+      <h2 class="text-2xl font-bold text-blue-600 mt-2">{{ approvedReturns }}</h2>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 p-5">
+      <p class="text-sm text-slate-500">In Transit</p>
+      <h2 class="text-2xl font-bold text-purple-600 mt-2">{{ inTransitReturns }}</h2>
+    </div>
+
+    <div class="bg-white rounded-xl border border-slate-200 p-5">
+      <p class="text-sm text-slate-500">Received</p>
+      <h2 class="text-2xl font-bold text-green-600 mt-2">{{ receivedReturns }}</h2>
+    </div>
+
+  </div>
+
+  <!-- Return Workflow -->
+  <div class="bg-white border border-slate-200 rounded-xl p-5">
+    <h2 class="font-semibold text-slate-800 mb-4">Return Processing Workflow</h2>
+
+    <div class="flex flex-wrap items-center gap-3 text-sm">
+      <span class="bg-amber-100 text-amber-700 px-4 py-2 rounded-lg font-medium">Requested</span>
+      <span class="text-slate-400">→</span>
+      <span class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium">Approved</span>
+      <span class="text-slate-400">→</span>
+      <span class="bg-purple-100 text-purple-700 px-4 py-2 rounded-lg font-medium">In Transit</span>
+      <span class="text-slate-400">→</span>
+      <span class="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-medium">Received at Warehouse</span>
+    </div>
+  </div>
+
+  <!-- Returns Table -->
+  <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+
+    <div class="p-5 border-b border-slate-200 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+      <h2 class="font-semibold text-slate-800">Return Requests</h2>
+
+      <div class="flex flex-col sm:flex-row gap-3">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          placeholder="Search returns..."
+          class="border border-slate-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+
+        <select
+          [(ngModel)]="selectedStatus"
+          class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white outline-none">
+          <option value="All">All Statuses</option>
+          <option value="Requested">Requested</option>
+          <option value="Approved">Approved</option>
+          <option value="In Transit">In Transit</option>
+          <option value="Received">Received</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+        <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+          <tr>
+            <th class="px-5 py-4">Return ID</th>
+            <th class="px-5 py-4">Tracking Number</th>
+            <th class="px-5 py-4">Customer / Merchant</th>
+            <th class="px-5 py-4">Return Reason</th>
+            <th class="px-5 py-4">Request Date</th>
+            <th class="px-5 py-4">Status</th>
+            <th class="px-5 py-4">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100">
+
+          @for (item of filteredReturns; track item.returnId) {
+            <tr class="hover:bg-slate-50">
+
+              <td class="px-5 py-4 font-medium text-slate-800 whitespace-nowrap">
+                {{ item.returnId }}
+              </td>
+
+              <td class="px-5 py-4 text-blue-600 whitespace-nowrap">
+                {{ item.trackingNumber }}
+              </td>
+
+              <td class="px-5 py-4">
+                <p class="font-medium text-slate-800">{{ item.customer }}</p>
+                <p class="text-xs text-slate-500 mt-1">{{ item.merchant }}</p>
+              </td>
+
+              <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+                {{ item.reason }}
+              </td>
+
+              <td class="px-5 py-4 text-slate-600 whitespace-nowrap">
+                {{ item.requestDate }}
+              </td>
+
+              <td class="px-5 py-4">
+                <span [class]="getStatusClass(item.status) + ' px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap'">
+                  {{ item.status }}
+                </span>
+              </td>
+
+              <td class="px-5 py-4">
+                <div class="flex flex-wrap gap-2">
+
+                  @if (item.status === 'Requested') {
+                    <button
+                      (click)="approveReturn(item.returnId)"
+                      class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-md text-xs">
+                      Approve
+                    </button>
+
+                    <button
+                      (click)="rejectReturn(item.returnId)"
+                      class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-md text-xs">
+                      Reject
+                    </button>
+                  }
+
+                  @if (item.status === 'Approved') {
+                    <button
+                      (click)="markInTransit(item.returnId)"
+                      class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md text-xs">
+                      Mark In Transit
+                    </button>
+                  }
+
+                  @if (item.status === 'In Transit') {
+                    <button
+                      (click)="markReceived(item.returnId)"
+                      class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-xs">
+                      Mark Received
+                    </button>
+                  }
+
+                  @if (item.status === 'Received' || item.status === 'Rejected') {
+                    <span class="text-slate-400 text-xs">No further action</span>
+                  }
+
+                </div>
+              </td>
+
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="text-center py-10 text-slate-400">
+                No return requests found.
+              </td>
+            </tr>
+          }
+
+        </tbody>
+      </table>
+    </div>
+
+    <div class="px-5 py-4 border-t border-slate-200 text-xs text-slate-500">
+      Showing {{ filteredReturns.length }} of {{ totalReturns }} return requests
+    </div>
+
+  </div>
+
+</div>

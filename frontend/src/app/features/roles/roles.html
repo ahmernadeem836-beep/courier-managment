@@ -1,0 +1,158 @@
+
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div>
+    <h1 class="text-2xl font-bold text-slate-800">Roles & Permissions</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      View system roles and manage their permission access.
+    </p>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+    <div class="bg-white border border-slate-200 rounded-xl p-5">
+      <p class="text-sm text-slate-500">Total Roles</p>
+      <h2 class="text-2xl font-bold text-slate-800 mt-2">{{ roles.length }}</h2>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-5">
+      <p class="text-sm text-slate-500">Available Permission Types</p>
+      <h2 class="text-2xl font-bold text-blue-600 mt-2">{{ permissions.length }}</h2>
+    </div>
+
+  </div>
+
+  <!-- Main Content -->
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+    <!-- Roles List -->
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+
+      <div class="p-5 border-b border-slate-200">
+        <h2 class="font-semibold text-slate-800">System Roles</h2>
+        <p class="text-xs text-slate-500 mt-1">Select a role to view its permissions.</p>
+      </div>
+
+      <div class="divide-y divide-slate-100">
+
+        @for (role of roles; track role.id) {
+          <button
+            type="button"
+            (click)="selectRole(role)"
+            [class]="selectedRole.id === role.id
+              ? 'bg-blue-50 border-l-4 border-blue-600'
+              : 'hover:bg-slate-50 border-l-4 border-transparent'"
+            class="w-full text-left p-4 transition">
+
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-medium text-sm text-slate-800">
+                {{ role.name }}
+              </span>
+
+              @if (selectedRole.id === role.id) {
+                <span class="text-blue-600 text-xs font-semibold">Selected</span>
+              }
+            </div>
+
+            <p class="text-xs text-slate-500 mt-1">
+              {{ role.description }}
+            </p>
+
+            <p class="text-xs text-slate-400 mt-2">
+              {{ getPermissionCount(role) }} of {{ permissions.length }} permissions
+            </p>
+
+          </button>
+        }
+
+      </div>
+    </div>
+
+    <!-- Permission Details -->
+    <div class="xl:col-span-2 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+
+      <div class="p-5 border-b border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-800">
+              {{ selectedRole.name }}
+            </h2>
+            <p class="text-sm text-slate-500 mt-1">
+              {{ selectedRole.description }}
+            </p>
+          </div>
+
+          <span class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium w-fit">
+            {{ getPermissionCount(selectedRole) }} Active Permissions
+          </span>
+        </div>
+      </div>
+
+      <!-- Permission Matrix -->
+      <div class="p-5">
+
+        <h3 class="font-medium text-slate-800 mb-4">Permission Matrix</h3>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+              <tr>
+                <th class="px-4 py-3">Permission</th>
+                <th class="px-4 py-3 text-center">Access</th>
+              </tr>
+            </thead>
+
+            <tbody class="divide-y divide-slate-100">
+
+              @for (permission of permissions; track permission.key) {
+                <tr class="hover:bg-slate-50">
+
+                  <td class="px-4 py-4 font-medium text-slate-700">
+                    {{ permission.label }}
+                  </td>
+
+                  <td class="px-4 py-4 text-center">
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+
+                      <input
+                        type="checkbox"
+                        [checked]="hasPermission(permission.key)"
+                        (change)="togglePermission(permission.key)"
+                        class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+
+                      <span
+                        [class]="hasPermission(permission.key)
+                          ? 'text-green-700'
+                          : 'text-slate-400'"
+                        class="text-xs font-medium">
+                        {{ hasPermission(permission.key) ? 'Enabled' : 'Disabled' }}
+                      </span>
+
+                    </label>
+                  </td>
+
+                </tr>
+              }
+
+            </tbody>
+
+          </table>
+        </div>
+
+        <div class="mt-5 bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p class="text-sm font-medium text-amber-800">Demo Configuration</p>
+          <p class="text-xs text-amber-700 mt-1">
+            Permission changes are temporary frontend changes. They are not saved
+            to the backend or database.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
