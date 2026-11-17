@@ -1,9 +1,11 @@
 
-<div class="flex min-h-screen bg-slate-100">
+<div class="flex h-screen overflow-hidden bg-slate-100">
 
-  <app-sidebar></app-sidebar>
+  <!-- Independent Sidebar -->
+  <app-sidebar class="block h-full shrink-0"></app-sidebar>
 
-  <main class="flex-1 min-w-0">
+  <!-- Independent Main Page -->
+  <main class="flex-1 min-w-0 h-full overflow-y-auto">
     <app-header></app-header>
 
     <section class="p-8">
