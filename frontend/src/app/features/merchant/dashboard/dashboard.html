@@ -1,0 +1,145 @@
+<div class="space-y-8">
+
+  <!-- Welcome Section -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-800">
+        Welcome back, Merchant!
+      </h2>
+      <p class="mt-1 text-sm text-slate-500">
+        Here's what's happening with your shipments today.
+      </p>
+    </div>
+
+    <a
+      routerLink="/merchant/create-shipment"
+      class="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+      + Create New Shipment
+    </a>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+
+    @for (stat of stats; track stat.title) {
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-slate-500">
+              {{ stat.title }}
+            </p>
+
+            <h3 class="mt-3 text-3xl font-bold text-slate-800">
+              {{ stat.value }}
+            </h3>
+          </div>
+
+          <div
+            class="flex h-12 w-12 items-center justify-center rounded-xl text-xl"
+            [class]="stat.color">
+            {{ stat.icon }}
+          </div>
+        </div>
+
+        <p class="mt-4 text-xs text-slate-500">
+          {{ stat.change }}
+        </p>
+
+      </div>
+    }
+
+  </div>
+
+  <!-- Recent Shipments -->
+  <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-6 py-5">
+
+      <div>
+        <h3 class="text-lg font-bold text-slate-800">
+          Recent Shipments
+        </h3>
+
+        <p class="mt-1 text-sm text-slate-500">
+          Overview of your latest bookings
+        </p>
+      </div>
+
+      <a
+        routerLink="/merchant/shipments"
+        class="text-sm font-semibold text-blue-600 hover:text-blue-800">
+        View All →
+      </a>
+
+    </div>
+
+    <div class="overflow-x-auto">
+
+      <table class="w-full min-w-[750px] text-left">
+
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-6 py-4 font-semibold">Tracking ID</th>
+            <th class="px-6 py-4 font-semibold">Customer</th>
+            <th class="px-6 py-4 font-semibold">Destination</th>
+            <th class="px-6 py-4 font-semibold">Booking Date</th>
+            <th class="px-6 py-4 font-semibold">Amount</th>
+            <th class="px-6 py-4 font-semibold">Status</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100">
+
+          @for (shipment of recentShipments; track shipment.tracking) {
+            <tr class="transition hover:bg-slate-50">
+
+              <td class="px-6 py-4 text-sm font-semibold text-blue-600">
+                {{ shipment.tracking }}
+              </td>
+
+              <td class="px-6 py-4 text-sm font-medium text-slate-700">
+                {{ shipment.customer }}
+              </td>
+
+              <td class="px-6 py-4 text-sm text-slate-600">
+                {{ shipment.destination }}
+              </td>
+
+              <td class="px-6 py-4 text-sm text-slate-600">
+                {{ shipment.date }}
+              </td>
+
+              <td class="px-6 py-4 text-sm font-medium text-slate-700">
+                {{ shipment.amount }}
+              </td>
+
+              <td class="px-6 py-4">
+                <span
+                  class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                  [class.bg-blue-100]="shipment.status === 'Booked'"
+                  [class.text-blue-700]="shipment.status === 'Booked'"
+                  [class.bg-purple-100]="shipment.status === 'In Transit'"
+                  [class.text-purple-700]="shipment.status === 'In Transit'"
+                  [class.bg-green-100]="shipment.status === 'Delivered'"
+                  [class.text-green-700]="shipment.status === 'Delivered'"
+                  [class.bg-amber-100]="shipment.status === 'Pending Pickup'"
+                  [class.text-amber-700]="shipment.status === 'Pending Pickup'">
+
+                  {{ shipment.status }}
+
+                </span>
+              </td>
+
+            </tr>
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>

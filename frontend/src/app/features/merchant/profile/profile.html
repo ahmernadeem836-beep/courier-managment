@@ -1,0 +1,145 @@
+<div class="mx-auto max-w-6xl space-y-6">
+
+  <!-- Heading -->
+  <div>
+    <h2 class="text-2xl font-bold text-slate-800">My Profile</h2>
+    <p class="mt-1 text-sm text-slate-500">
+      View your merchant account and business information.
+    </p>
+  </div>
+
+  <!-- Profile Overview -->
+  <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+    <div class="h-32 bg-gradient-to-r from-blue-700 to-indigo-600"></div>
+
+    <div class="px-6 pb-6">
+
+      <div class="-mt-12 flex flex-wrap items-end justify-between gap-4">
+
+        <div class="flex items-end gap-4">
+
+          <div class="flex h-24 w-24 items-center justify-center rounded-2xl border-4 border-white bg-blue-100 text-3xl font-bold text-blue-700 shadow-sm">
+            {{ merchant.businessName.charAt(0) }}
+          </div>
+
+          <div class="pb-2">
+            <h3 class="text-xl font-bold text-slate-800">
+              {{ merchant.businessName }}
+            </h3>
+
+            <p class="text-sm text-slate-500">
+              {{ merchant.ownerName }}
+            </p>
+          </div>
+
+        </div>
+
+        <span class="mb-2 rounded-full bg-green-100 px-4 py-2 text-xs font-semibold text-green-700">
+          ● {{ merchant.accountStatus }}
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Merchant Code -->
+  <div class="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+
+    <div class="flex flex-wrap items-center justify-between gap-4">
+
+      <div>
+        <p class="text-sm font-semibold text-blue-700">
+          Your Merchant Code
+        </p>
+
+        <p class="mt-1 text-sm text-blue-600">
+          This code identifies your business in shipment tracking IDs.
+        </p>
+      </div>
+
+      <div class="rounded-xl border border-blue-200 bg-white px-6 py-3">
+        <h3 class="text-2xl font-bold tracking-widest text-blue-700">
+          {{ merchant.merchantCode }}
+        </h3>
+      </div>
+
+    </div>
+
+    <p class="mt-3 text-xs text-blue-600">
+      Example tracking ID: {{ merchant.merchantCode }}-7K4P92QX
+    </p>
+
+  </div>
+
+  <!-- Business Information -->
+  <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+    <div class="border-b border-slate-100 px-6 py-5">
+      <h3 class="font-bold text-slate-800">Business Information</h3>
+      <p class="mt-1 text-sm text-slate-500">
+        Your registered business details
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
+
+      <div>
+        <p class="text-xs font-medium uppercase text-slate-400">Business Name</p>
+        <p class="mt-2 font-semibold text-slate-800">{{ merchant.businessName }}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase text-slate-400">Owner Name</p>
+        <p class="mt-2 font-semibold text-slate-800">{{ merchant.ownerName }}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase text-slate-400">Email Address</p>
+        <p class="mt-2 font-semibold text-slate-800">{{ merchant.email }}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase text-slate-400">Phone Number</p>
+        <p class="mt-2 font-semibold text-slate-800">{{ merchant.phone }}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase text-slate-400">Business City</p>
+        <p class="mt-2 font-semibold text-slate-800">{{ merchant.city }}</p>
+      </div>
+
+      <div>
+        <p class="text-xs font-medium uppercase text-slate-400">Registration Date</p>
+        <p class="mt-2 font-semibold text-slate-800">{{ merchant.registrationDate }}</p>
+      </div>
+
+      <div class="md:col-span-2">
+        <p class="text-xs font-medium uppercase text-slate-400">Business Address</p>
+        <p class="mt-2 font-semibold text-slate-800">{{ merchant.businessAddress }}</p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Account Information -->
+  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+    <h3 class="font-bold text-slate-800">Account Information</h3>
+
+    <div class="mt-5 flex items-center justify-between border-b border-slate-100 py-4">
+      <span class="text-sm text-slate-500">Account Type</span>
+      <span class="text-sm font-semibold text-slate-800">Merchant</span>
+    </div>
+
+    <div class="flex items-center justify-between py-4">
+      <span class="text-sm text-slate-500">Account Status</span>
+      <span class="text-sm font-semibold text-green-600">Active</span>
+    </div>
+
+  </div>
+
+</div>

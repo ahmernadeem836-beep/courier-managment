@@ -1,0 +1,245 @@
+
+<div class="mx-auto max-w-6xl space-y-6">
+
+  <!-- Page Heading -->
+  <div>
+    <h2 class="text-2xl font-bold text-slate-800">Create New Shipment</h2>
+    <p class="mt-1 text-sm text-slate-500">
+      Enter shipment details to create a new booking.
+    </p>
+  </div>
+
+  <!-- Success Message -->
+  @if (bookingSuccess) {
+    <div class="rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
+      Booking details validated successfully! Backend booking integration is pending.
+    </div>
+  }
+
+  <form (ngSubmit)="onSubmit()" #shipmentForm="ngForm" class="space-y-6">
+
+    <!-- Customer Details -->
+    <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+      <div class="border-b border-slate-100 px-6 py-5">
+        <h3 class="font-bold text-slate-800">01. Customer Details</h3>
+        <p class="mt-1 text-sm text-slate-500">Merchant pickup contact information</p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-5 p-6 md:grid-cols-2">
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Customer Name *</label>
+          <input name="customerName" [(ngModel)]="shipment.customerName"
+            required placeholder="Enter customer name"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+          @if (submitted && !shipment.customerName.trim()) {
+            <p class="mt-1 text-xs text-red-600">Customer name is required.</p>
+          }
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Contact Number *</label>
+          <input name="customerPhone" [(ngModel)]="shipment.customerPhone"
+            required type="tel" maxlength="11" placeholder="03XXXXXXXXX"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+          @if (submitted && !isPhoneValid(shipment.customerPhone)) {
+            <p class="mt-1 text-xs text-red-600">Enter a valid 11-digit Pakistani mobile number.</p>
+          }
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Pickup Details -->
+    <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+      <div class="border-b border-slate-100 px-6 py-5">
+        <h3 class="font-bold text-slate-800">02. Pickup Details</h3>
+        <p class="mt-1 text-sm text-slate-500">Where should the parcel be collected?</p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-5 p-6 md:grid-cols-2">
+
+        <div class="md:col-span-2">
+          <label class="mb-2 block text-sm font-medium text-slate-700">Pickup Address *</label>
+          <textarea name="pickupAddress" [(ngModel)]="shipment.pickupAddress"
+            required rows="2" placeholder="Enter complete pickup address"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></textarea>
+
+          @if (submitted && !shipment.pickupAddress.trim()) {
+            <p class="mt-1 text-xs text-red-600">Pickup address is required.</p>
+          }
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Pickup City *</label>
+          <input name="pickupCity" [(ngModel)]="shipment.pickupCity"
+            required placeholder="Enter city"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+          @if (submitted && !shipment.pickupCity.trim()) {
+            <p class="mt-1 text-xs text-red-600">Pickup city is required.</p>
+          }
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Delivery Details -->
+    <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+      <div class="border-b border-slate-100 px-6 py-5">
+        <h3 class="font-bold text-slate-800">03. Delivery Details</h3>
+        <p class="mt-1 text-sm text-slate-500">Who will receive this shipment?</p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-5 p-6 md:grid-cols-2">
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Receiver Name *</label>
+          <input name="receiverName" [(ngModel)]="shipment.receiverName"
+            required placeholder="Enter receiver name"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+          @if (submitted && !shipment.receiverName.trim()) {
+            <p class="mt-1 text-xs text-red-600">Receiver name is required.</p>
+          }
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Receiver Phone *</label>
+          <input name="receiverPhone" [(ngModel)]="shipment.receiverPhone"
+            required type="tel" maxlength="11" placeholder="03XXXXXXXXX"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+          @if (submitted && !isPhoneValid(shipment.receiverPhone)) {
+            <p class="mt-1 text-xs text-red-600">Enter a valid 11-digit Pakistani mobile number.</p>
+          }
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="mb-2 block text-sm font-medium text-slate-700">Delivery Address *</label>
+          <textarea name="deliveryAddress" [(ngModel)]="shipment.deliveryAddress"
+            required rows="2" placeholder="Enter complete delivery address"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></textarea>
+
+          @if (submitted && !shipment.deliveryAddress.trim()) {
+            <p class="mt-1 text-xs text-red-600">Delivery address is required.</p>
+          }
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Delivery City *</label>
+          <input name="deliveryCity" [(ngModel)]="shipment.deliveryCity"
+            required placeholder="Enter destination city"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+          @if (submitted && !shipment.deliveryCity.trim()) {
+            <p class="mt-1 text-xs text-red-600">Delivery city is required.</p>
+          }
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Parcel Information -->
+    <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+      <div class="border-b border-slate-100 px-6 py-5">
+        <h3 class="font-bold text-slate-800">04. Parcel Information</h3>
+        <p class="mt-1 text-sm text-slate-500">Provide details about the package</p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-5 p-6 md:grid-cols-2">
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Parcel Description *</label>
+          <input name="parcelDescription" [(ngModel)]="shipment.parcelDescription"
+            required placeholder="e.g. Electronics, Clothing"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+          @if (submitted && !shipment.parcelDescription.trim()) {
+            <p class="mt-1 text-xs text-red-600">Parcel description is required.</p>
+          }
+        </div>
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Weight (KG) *</label>
+          <input name="weight" [(ngModel)]="shipment.weight"
+            required type="number" min="0.1" step="0.1" placeholder="e.g. 2.5"
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+          @if (submitted && !isWeightValid()) {
+            <p class="mt-1 text-xs text-red-600">Enter a weight greater than zero.</p>
+          }
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="mb-2 block text-sm font-medium text-slate-700">Special Instructions</label>
+          <textarea name="specialInstructions" [(ngModel)]="shipment.specialInstructions"
+            rows="2" placeholder="Any additional delivery instructions..."
+            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"></textarea>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Payment Details -->
+    <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+      <div class="border-b border-slate-100 px-6 py-5">
+        <h3 class="font-bold text-slate-800">05. Payment Details</h3>
+        <p class="mt-1 text-sm text-slate-500">Select the shipment payment method</p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-5 p-6 md:grid-cols-2">
+
+        <div>
+          <label class="mb-2 block text-sm font-medium text-slate-700">Payment Type *</label>
+
+          <select name="paymentType" [(ngModel)]="shipment.paymentType"
+            class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+            <option value="COD">Cash on Delivery (COD)</option>
+            <option value="Prepaid">Prepaid</option>
+
+          </select>
+        </div>
+
+        @if (shipment.paymentType === 'COD') {
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-700">COD Amount (PKR) *</label>
+            <input name="codAmount" [(ngModel)]="shipment.codAmount"
+              required type="number" min="1" step="1" placeholder="Enter amount"
+              class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+
+            @if (submitted && !isCODValid()) {
+              <p class="mt-1 text-xs text-red-600">Enter a COD amount greater than zero.</p>
+            }
+          </div>
+        }
+
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <div class="flex flex-wrap justify-end gap-3 pb-4">
+
+      <button type="button" (click)="resetForm()"
+        class="rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+        Reset Form
+      </button>
+
+      <button type="submit"
+        class="rounded-xl bg-blue-600 px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+        Create Booking →
+      </button>
+
+    </div>
+
+  </form>
+
+</div>

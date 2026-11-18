@@ -1,0 +1,161 @@
+<div class="space-y-6">
+
+  <!-- Heading -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-800">My Shipments</h2>
+      <p class="mt-1 text-sm text-slate-500">
+        View and manage all your shipment bookings.
+      </p>
+    </div>
+
+    <a
+      routerLink="/merchant/create-shipment"
+      class="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+      + Create Shipment
+    </a>
+  </div>
+
+  <!-- Summary -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+
+    <div class="rounded-xl border border-slate-200 bg-white p-5">
+      <p class="text-sm text-slate-500">Total Shipments</p>
+      <h3 class="mt-2 text-2xl font-bold text-slate-800">
+        {{ shipments.length }}
+      </h3>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 bg-white p-5">
+      <p class="text-sm text-slate-500">In Transit</p>
+      <h3 class="mt-2 text-2xl font-bold text-purple-600">
+        {{ shipments.filter(s => s.status === 'In Transit').length }}
+      </h3>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 bg-white p-5">
+      <p class="text-sm text-slate-500">Delivered</p>
+      <h3 class="mt-2 text-2xl font-bold text-green-600">
+        {{ shipments.filter(s => s.status === 'Delivered').length }}
+      </h3>
+    </div>
+
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 md:flex-row">
+
+    <div class="flex-1">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        placeholder="Search by tracking ID or receiver..."
+        class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+    </div>
+
+    <div class="w-full md:w-56">
+      <select
+        [(ngModel)]="selectedStatus"
+        class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500">
+
+        <option value="All">All Statuses</option>
+        <option value="Booked">Booked</option>
+        <option value="Pending Pickup">Pending Pickup</option>
+        <option value="In Transit">In Transit</option>
+        <option value="Delivered">Delivered</option>
+        <option value="Cancelled">Cancelled</option>
+
+      </select>
+    </div>
+
+  </div>
+
+  <!-- Shipments Table -->
+  <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+    <div class="border-b border-slate-100 px-6 py-5">
+      <h3 class="font-bold text-slate-800">Shipment Records</h3>
+      <p class="mt-1 text-sm text-slate-500">
+        {{ filteredShipments.length }} shipment(s) found
+      </p>
+    </div>
+
+    <div class="overflow-x-auto">
+
+      <table class="w-full min-w-[850px] text-left">
+
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-6 py-4 font-semibold">Tracking ID</th>
+            <th class="px-6 py-4 font-semibold">Receiver</th>
+            <th class="px-6 py-4 font-semibold">Destination</th>
+            <th class="px-6 py-4 font-semibold">Booking Date</th>
+            <th class="px-6 py-4 font-semibold">COD Amount</th>
+            <th class="px-6 py-4 font-semibold">Status</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100">
+
+          @for (shipment of filteredShipments; track shipment.tracking) {
+            <tr class="transition hover:bg-slate-50">
+
+              <td class="px-6 py-4 text-sm font-semibold text-blue-600">
+                {{ shipment.tracking }}
+              </td>
+
+              <td class="px-6 py-4 text-sm font-medium text-slate-700">
+                {{ shipment.receiver }}
+              </td>
+
+              <td class="px-6 py-4 text-sm text-slate-600">
+                {{ shipment.destination }}
+              </td>
+
+              <td class="px-6 py-4 text-sm text-slate-600">
+                {{ shipment.date }}
+              </td>
+
+              <td class="px-6 py-4 text-sm font-medium text-slate-700">
+                Rs. {{ shipment.amount.toLocaleString() }}
+              </td>
+
+              <td class="px-6 py-4">
+                <span
+                  class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                  [class.bg-blue-100]="shipment.status === 'Booked'"
+                  [class.text-blue-700]="shipment.status === 'Booked'"
+                  [class.bg-purple-100]="shipment.status === 'In Transit'"
+                  [class.text-purple-700]="shipment.status === 'In Transit'"
+                  [class.bg-green-100]="shipment.status === 'Delivered'"
+                  [class.text-green-700]="shipment.status === 'Delivered'"
+                  [class.bg-amber-100]="shipment.status === 'Pending Pickup'"
+                  [class.text-amber-700]="shipment.status === 'Pending Pickup'"
+                  [class.bg-red-100]="shipment.status === 'Cancelled'"
+                  [class.text-red-700]="shipment.status === 'Cancelled'">
+
+                  {{ shipment.status }}
+
+                </span>
+              </td>
+
+            </tr>
+          }
+
+          @if (filteredShipments.length === 0) {
+            <tr>
+              <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-500">
+                No shipments found.
+              </td>
+            </tr>
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
