@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import { Auth } from '../../../core/services/auth';
+
 import {
   ShipmentService,
   type Shipment
@@ -16,14 +19,24 @@ import {
   styleUrl: './header.css',
 })
 export class Header {
+
   private router = inject(Router);
   private shipmentService = inject(ShipmentService);
+  private auth = inject(Auth);
 
   pageTitle = signal('Dashboard');
 
   searchTerm = '';
   profileOpen = false;
   notificationOpen = false;
+
+  get currentUser() {
+    return this.auth.getCurrentUser();
+  }
+
+  get currentUserRole() {
+    return this.auth.getUserRole();
+  }
 
   private pageTitles: Record<string, string> = {
     '/dashboard': 'Dashboard',
@@ -99,5 +112,11 @@ export class Header {
   toggleNotifications(): void {
     this.notificationOpen = !this.notificationOpen;
     this.profileOpen = false;
+  }
+
+  logout(): void {
+    this.auth.logout();
+    this.profileOpen = false;
+    this.router.navigate(['/login']);
   }
 }

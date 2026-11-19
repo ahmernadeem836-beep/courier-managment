@@ -1,6 +1,8 @@
+
 import { Component, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { Auth } from '../../../core/services/auth';
+
 @Component({
   selector: 'app-merchant-header',
   imports: [RouterLink],
@@ -12,7 +14,14 @@ export class MerchantHeader {
   showNotifications = false;
   showProfileMenu = false;
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private auth: Auth
+  ) {}
+
+  get currentUser() {
+    return this.auth.getCurrentUser();
+  }
 
   toggleNotifications(): void {
     this.showNotifications = !this.showNotifications;
@@ -25,7 +34,7 @@ export class MerchantHeader {
   }
 
   logout(): void {
-    // Authentication integration baad mein karenge.
-    this.router.navigate(['/']);
+    this.auth.logout();
+    this.router.navigate(['/login']);
   }
 }

@@ -1,6 +1,17 @@
+
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
+
+interface Shipment {
+  tracking: string;
+  receiver: string;
+  destination: string;
+  date: string;
+  amount: number;
+  status: string;
+}
+
 @Component({
   selector: 'app-merchant-shipments',
   imports: [FormsModule, RouterLink],
@@ -11,8 +22,9 @@ export class Shipments {
 
   searchTerm = '';
   selectedStatus = 'All';
+  selectedShipment: Shipment | null = null;
 
-  shipments = [
+  shipments: Shipment[] = [
     {
       tracking: 'TRK17945644896841213',
       receiver: 'Ali Ahmed',
@@ -55,17 +67,47 @@ export class Shipments {
     },
   ];
 
-  get filteredShipments() {
+  constructor(private router: Router) {}
+
+  get filteredShipments(): Shipment[] {
     return this.shipments.filter(shipment => {
+      const search = this.searchTerm.trim().toLowerCase();
+
       const matchesSearch =
-        shipment.tracking.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        shipment.receiver.toLowerCase().includes(this.searchTerm.toLowerCase());
+        shipment.tracking.toLowerCase().includes(search) ||
+        shipment.receiver.toLowerCase().includes(search);
 
       const matchesStatus =
         this.selectedStatus === 'All' ||
         shipment.status === this.selectedStatus;
 
       return matchesSearch && matchesStatus;
+    });
+  }
+
+  get totalShipments(): number {
+    return this.shipments.length;
+  }
+
+  get inTransitCount(): number {
+    return this.shipments.filter(s => s.status === 'In Transit').length;
+  }
+
+  get deliveredCount(): number {
+    return this.shipments.filter(s => s.status === 'Delivered').length;
+  }
+
+  viewDetails(shipment: Shipment): void {
+    this.selectedShipment = shipment;
+  }
+
+  closeDetails(): void {
+    this.selectedShipment = null;
+  }
+
+  trackShipment(trackingNumber: string): void {
+    this.router.navigate(['/merchant/tracking'], {
+      queryParams: { tracking: trackingNumber },
     });
   }
 }

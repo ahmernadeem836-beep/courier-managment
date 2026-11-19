@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 
 interface TrackingEvent {
   title: string;
@@ -14,11 +16,24 @@ interface TrackingEvent {
   templateUrl: './tracking.html',
   styleUrl: './tracking.css',
 })
-export class Tracking {
+export class Tracking implements OnInit {
 
   trackingNumber = '';
   searched = false;
   shipment: any = null;
+
+  constructor(private route: ActivatedRoute) {}
+
+  ngOnInit(): void {
+    this.route.queryParamMap.subscribe(params => {
+      const trackingId = params.get('tracking');
+
+      if (trackingId) {
+        this.trackingNumber = trackingId;
+        this.searchShipment();
+      }
+    });
+  }
 
   demoShipments = [
     {

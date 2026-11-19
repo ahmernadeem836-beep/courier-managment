@@ -1,197 +1,67 @@
 
-<header class="min-h-20 bg-white border-b border-slate-200 px-8 py-3 flex items-center justify-between gap-6">
+<!-- Profile -->
+<div class="relative border-l border-slate-200 pl-5">
 
-  <!-- Page Title -->
-  <div class="shrink-0">
-    <h1 class="text-xl font-bold text-slate-800">
-      {{ pageTitle() }}
-    </h1>
-    <p class="text-sm text-slate-500">
-      Welcome back! Here's what's happening today.
-    </p>
-  </div>
+  <button
+    type="button"
+    (click)="toggleProfile()"
+    class="flex items-center gap-3 rounded-lg p-1 hover:bg-slate-50 transition-colors">
 
-  <!-- Right Section -->
-  <div class="flex items-center gap-5">
+    <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+      {{ currentUser?.name?.charAt(0) || 'U' }}
+    </div>
 
-    <!-- Global Search -->
-    <div class="relative w-72">
-      <div class="relative">
-        <input
-          type="text"
-          [(ngModel)]="searchTerm"
-          placeholder="Search shipments, customers..."
-          autocomplete="off"
-          class="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-100 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
-        />
+    <div class="text-left">
+      <p class="text-sm font-semibold text-slate-800">
+        {{ currentUser?.name || 'Guest User' }}
+      </p>
 
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-          ⌕
-        </span>
+      <p class="text-xs text-slate-500">
+        {{ currentUserRole || 'Not Logged In' }}
+      </p>
+    </div>
+
+    <span class="text-slate-400 text-xs">▼</span>
+  </button>
+
+  @if (profileOpen) {
+    <div class="absolute right-0 top-full mt-3 w-60 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+
+      <div class="px-4 py-4 border-b border-slate-100">
+        <p class="text-sm font-semibold text-slate-800">
+          {{ currentUser?.name }}
+        </p>
+
+        <p class="text-xs text-slate-500 mt-1">
+          {{ currentUser?.email }}
+        </p>
+
+        <p class="text-xs text-blue-600 mt-1">
+          {{ currentUserRole }}
+        </p>
       </div>
 
-      <!-- Search Results -->
-      @if (searchTerm.trim()) {
-        <div class="absolute top-full left-0 mt-2 w-96 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
+      <div class="p-2">
 
-          <div class="px-4 py-3 border-b border-slate-100">
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-              Shipment Results
-            </p>
-          </div>
-
-          @if (searchResults.length > 0) {
-            <div class="max-h-80 overflow-y-auto">
-              @for (shipment of searchResults; track shipment.tracking) {
-                <button
-                  type="button"
-                  (click)="openShipment(shipment)"
-                  class="w-full text-left px-4 py-3 hover:bg-blue-50 border-b border-slate-100 last:border-0 transition-colors">
-
-                  <div class="flex items-center justify-between gap-3">
-                    <p class="text-sm font-semibold text-slate-800">
-                      {{ shipment.tracking }}
-                    </p>
-
-                    <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-                      {{ shipment.status }}
-                    </span>
-                  </div>
-
-                  <div class="mt-1 flex flex-col gap-1">
-                    <p class="text-xs text-slate-500">
-                      Customer: {{ shipment.customer }}
-                    </p>
-                    <p class="text-xs text-slate-500">
-                      Merchant: {{ shipment.merchant }}
-                    </p>
-                    <p class="text-xs text-slate-400">
-                      {{ shipment.origin }} → {{ shipment.destination }}
-                    </p>
-                  </div>
-
-                </button>
-              }
-            </div>
-          } @else {
-            <div class="px-4 py-8 text-center">
-              <p class="text-sm font-medium text-slate-600">
-                No shipments found
-              </p>
-              <p class="text-xs text-slate-400 mt-1">
-                Try another tracking number or name.
-              </p>
-            </div>
-          }
-
+        <div class="px-3 py-2.5 text-sm text-slate-600 rounded-lg">
+          My Profile
         </div>
-      }
+
+        <div class="px-3 py-2.5 text-sm text-slate-600 rounded-lg">
+          Account Settings
+        </div>
+
+        <div class="border-t border-slate-100 my-2"></div>
+
+        <button
+          type="button"
+          (click)="logout()"
+          class="w-full text-left px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 rounded-lg">
+          Logout
+        </button>
+
+      </div>
     </div>
+  }
 
-    <!-- Notifications -->
-    <div class="relative">
-      <button
-        type="button"
-        (click)="toggleNotifications()"
-        class="relative text-slate-500 hover:text-blue-600 text-xl p-2 rounded-lg hover:bg-slate-100 transition-colors"
-        aria-label="Notifications">
-        ♧
-
-        <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-      </button>
-
-      @if (notificationOpen) {
-        <div class="absolute right-0 top-full mt-3 w-80 bg-white border border-slate-200 rounded-xl shadow-xl z-50">
-
-          <div class="px-4 py-3 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="font-semibold text-slate-800">Notifications</h3>
-            <span class="text-xs text-blue-600">Demo</span>
-          </div>
-
-          <div class="p-4 border-b border-slate-100">
-            <p class="text-sm font-medium text-slate-700">
-              Shipment booked
-            </p>
-            <p class="text-xs text-slate-500 mt-1">
-              A new shipment has been booked.
-            </p>
-          </div>
-
-          <div class="p-4 border-b border-slate-100">
-            <p class="text-sm font-medium text-slate-700">
-              Delivery update
-            </p>
-            <p class="text-xs text-slate-500 mt-1">
-              A shipment status has been updated.
-            </p>
-          </div>
-
-          <div class="p-3 text-center">
-            <p class="text-xs text-slate-400">
-              Sample notifications only
-            </p>
-          </div>
-
-        </div>
-      }
-    </div>
-
-    <!-- Profile -->
-    <div class="relative border-l border-slate-200 pl-5">
-
-      <button
-        type="button"
-        (click)="toggleProfile()"
-        class="flex items-center gap-3 rounded-lg p-1 hover:bg-slate-50 transition-colors">
-
-        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-          A
-        </div>
-
-        <div class="text-left">
-          <p class="text-sm font-semibold text-slate-800">
-            Admin User
-          </p>
-          <p class="text-xs text-slate-500">
-            Administrator
-          </p>
-        </div>
-
-        <span class="text-slate-400 text-xs">▼</span>
-      </button>
-
-      @if (profileOpen) {
-        <div class="absolute right-0 top-full mt-3 w-60 bg-white border border-slate-200 rounded-xl shadow-xl z-50 overflow-hidden">
-
-          <div class="px-4 py-4 border-b border-slate-100">
-            <p class="text-sm font-semibold text-slate-800">
-              Admin User
-            </p>
-            <p class="text-xs text-slate-500 mt-1">
-              Administrator
-            </p>
-          </div>
-
-          <div class="p-2">
-            <div class="px-3 py-2.5 text-sm text-slate-600 rounded-lg">
-              My Profile
-            </div>
-
-            <div class="px-3 py-2.5 text-sm text-slate-600 rounded-lg">
-              Account Settings
-            </div>
-
-            <div class="border-t border-slate-100 my-2"></div>
-
-            <div class="px-3 py-2.5 text-sm text-slate-400">
-              Logout (Authentication pending)
-            </div>
-          </div>
-
-        </div>
-      }
-
-    </div>
-
-  </div>
-</header>
+</div>

@@ -1,3 +1,4 @@
+
 <div class="space-y-6">
 
   <!-- Heading -->
@@ -22,21 +23,21 @@
     <div class="rounded-xl border border-slate-200 bg-white p-5">
       <p class="text-sm text-slate-500">Total Shipments</p>
       <h3 class="mt-2 text-2xl font-bold text-slate-800">
-        {{ shipments.length }}
+        {{ totalShipments }}
       </h3>
     </div>
 
     <div class="rounded-xl border border-slate-200 bg-white p-5">
       <p class="text-sm text-slate-500">In Transit</p>
       <h3 class="mt-2 text-2xl font-bold text-purple-600">
-        {{ shipments.filter(s => s.status === 'In Transit').length }}
+        {{ inTransitCount }}
       </h3>
     </div>
 
     <div class="rounded-xl border border-slate-200 bg-white p-5">
       <p class="text-sm text-slate-500">Delivered</p>
       <h3 class="mt-2 text-2xl font-bold text-green-600">
-        {{ shipments.filter(s => s.status === 'Delivered').length }}
+        {{ deliveredCount }}
       </h3>
     </div>
 
@@ -82,7 +83,7 @@
 
     <div class="overflow-x-auto">
 
-      <table class="w-full min-w-[850px] text-left">
+      <table class="w-full min-w-[1050px] text-left">
 
         <thead class="bg-slate-50 text-xs uppercase text-slate-500">
           <tr>
@@ -92,6 +93,7 @@
             <th class="px-6 py-4 font-semibold">Booking Date</th>
             <th class="px-6 py-4 font-semibold">COD Amount</th>
             <th class="px-6 py-4 font-semibold">Status</th>
+            <th class="px-6 py-4 font-semibold">Actions</th>
           </tr>
         </thead>
 
@@ -133,10 +135,28 @@
                   [class.text-amber-700]="shipment.status === 'Pending Pickup'"
                   [class.bg-red-100]="shipment.status === 'Cancelled'"
                   [class.text-red-700]="shipment.status === 'Cancelled'">
-
                   {{ shipment.status }}
-
                 </span>
+              </td>
+
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+
+                  <button
+                    type="button"
+                    (click)="viewDetails(shipment)"
+                    class="text-sm font-semibold text-slate-600 hover:text-blue-600">
+                    Details
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="trackShipment(shipment.tracking)"
+                    class="text-sm font-semibold text-blue-600 hover:text-blue-800">
+                    Track
+                  </button>
+
+                </div>
               </td>
 
             </tr>
@@ -144,7 +164,7 @@
 
           @if (filteredShipments.length === 0) {
             <tr>
-              <td colspan="6" class="px-6 py-12 text-center text-sm text-slate-500">
+              <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-500">
                 No shipments found.
               </td>
             </tr>
@@ -159,3 +179,90 @@
   </div>
 
 </div>
+
+<!-- Shipment Details Modal -->
+@if (selectedShipment; as shipment) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+    (click)="closeDetails()">
+
+    <div
+      class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl"
+      (click)="$event.stopPropagation()">
+
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div>
+          <h3 class="text-xl font-bold text-slate-800">Shipment Details</h3>
+          <p class="mt-1 text-sm text-slate-500">Booking information</p>
+        </div>
+
+        <button
+          type="button"
+          (click)="closeDetails()"
+          class="rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-100">
+          ✕
+        </button>
+      </div>
+
+      <div class="mt-5 space-y-4">
+
+        <div>
+          <p class="text-xs font-semibold uppercase text-slate-400">Tracking ID</p>
+          <p class="mt-1 font-semibold text-blue-600">{{ shipment.tracking }}</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+
+          <div>
+            <p class="text-xs font-semibold uppercase text-slate-400">Receiver</p>
+            <p class="mt-1 font-medium text-slate-800">{{ shipment.receiver }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs font-semibold uppercase text-slate-400">Destination</p>
+            <p class="mt-1 font-medium text-slate-800">{{ shipment.destination }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs font-semibold uppercase text-slate-400">Booking Date</p>
+            <p class="mt-1 font-medium text-slate-800">{{ shipment.date }}</p>
+          </div>
+
+          <div>
+            <p class="text-xs font-semibold uppercase text-slate-400">COD Amount</p>
+            <p class="mt-1 font-medium text-slate-800">
+              Rs. {{ shipment.amount.toLocaleString() }}
+            </p>
+          </div>
+
+        </div>
+
+        <div class="border-t border-slate-100 pt-4">
+          <p class="text-xs font-semibold uppercase text-slate-400">Current Status</p>
+          <p class="mt-1 font-semibold text-slate-800">{{ shipment.status }}</p>
+        </div>
+
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+
+        <button
+          type="button"
+          (click)="closeDetails()"
+          class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          Close
+        </button>
+
+        <button
+          type="button"
+          (click)="trackShipment(shipment.tracking)"
+          class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+          Track Shipment
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+}

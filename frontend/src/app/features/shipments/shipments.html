@@ -1,4 +1,3 @@
-
 <div class="space-y-6">
 
   <!-- Page Heading -->
@@ -11,6 +10,7 @@
     </div>
 
     <button
+      type="button"
       (click)="openCreateForm()"
       class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition">
       + Create Shipment
@@ -188,25 +188,33 @@
 
     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <p class="text-sm text-slate-500">Total Shipments</p>
-      <h3 class="text-2xl font-bold text-slate-800 mt-2">1,248</h3>
+      <h3 class="text-2xl font-bold text-slate-800 mt-2">
+        {{ totalShipments }}
+      </h3>
       <p class="text-xs text-blue-600 mt-2">All registered shipments</p>
     </div>
 
     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <p class="text-sm text-slate-500">Booked</p>
-      <h3 class="text-2xl font-bold text-blue-600 mt-2">185</h3>
+      <h3 class="text-2xl font-bold text-blue-600 mt-2">
+        {{ bookedShipments }}
+      </h3>
       <p class="text-xs text-slate-500 mt-2">Newly booked shipments</p>
     </div>
 
     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <p class="text-sm text-slate-500">In Transit</p>
-      <h3 class="text-2xl font-bold text-purple-600 mt-2">320</h3>
+      <h3 class="text-2xl font-bold text-purple-600 mt-2">
+        {{ inTransitShipments }}
+      </h3>
       <p class="text-xs text-slate-500 mt-2">Currently moving</p>
     </div>
 
     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <p class="text-sm text-slate-500">Delivered</p>
-      <h3 class="text-2xl font-bold text-green-600 mt-2">690</h3>
+      <h3 class="text-2xl font-bold text-green-600 mt-2">
+        {{ deliveredShipments }}
+      </h3>
       <p class="text-xs text-slate-500 mt-2">Successfully delivered</p>
     </div>
 
@@ -215,6 +223,7 @@
   <!-- Shipments Table -->
   <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
 
+    <!-- Table Header and Filters -->
     <div class="p-5 border-b border-slate-200">
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
@@ -234,6 +243,7 @@
             type="text"
             name="searchTerm"
             [(ngModel)]="searchTerm"
+            (ngModelChange)="onFiltersChanged()"
             placeholder="Search shipment..."
             class="border border-slate-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
 
@@ -241,6 +251,7 @@
           <select
             name="selectedStatus"
             [(ngModel)]="selectedStatus"
+            (ngModelChange)="onFiltersChanged()"
             class="border border-slate-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
 
             <option value="All">All Statuses</option>
@@ -274,7 +285,7 @@
 
         <tbody class="divide-y divide-slate-100">
 
-          @for (shipment of filteredShipments; track shipment.tracking) {
+          @for (shipment of paginatedShipments; track shipment.tracking) {
 
             <tr class="hover:bg-slate-50 transition">
 
@@ -295,7 +306,7 @@
               </td>
 
               <td class="px-6 py-4 text-slate-600">
-                {{ shipment.date }}
+                {{ shipment.bookingDate || shipment.date }}
               </td>
 
               <td class="px-6 py-4">
@@ -305,14 +316,14 @@
                 </span>
               </td>
 
-      <td class="px-6 py-4">
-  <a
-    [routerLink]="['/shipment-tracking']"
-    [queryParams]="{ tracking: shipment.tracking }"
-    class="text-blue-600 hover:text-blue-800 font-medium">
-    Track →
-  </a>
-</td>
+              <td class="px-6 py-4">
+                <a
+                  [routerLink]="['/shipment-tracking']"
+                  [queryParams]="{ tracking: shipment.tracking }"
+                  class="text-blue-600 hover:text-blue-800 font-medium">
+                  Track →
+                </a>
+              </td>
 
             </tr>
 
@@ -331,8 +342,76 @@
       </table>
     </div>
 
-    <div class="px-6 py-4 border-t border-slate-100 text-sm text-slate-500">
-      Showing {{ filteredShipments.length }} of {{ shipments.length }} shipments
+    <!-- Pagination Footer -->
+    <div class="px-5 py-4 border-t border-slate-100">
+
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+        <!-- Records Information -->
+        <div class="text-sm text-slate-500">
+          Showing
+          <span class="font-medium text-slate-700">{{ startRecord }}</span>
+          to
+          <span class="font-medium text-slate-700">{{ endRecord }}</span>
+          of
+          <span class="font-medium text-slate-700">{{ filteredShipments.length }}</span>
+          shipments
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+
+          <!-- Page Size -->
+          <div class="flex items-center gap-2">
+            <label for="pageSize" class="text-sm text-slate-500">
+              Rows:
+            </label>
+
+            <select
+              id="pageSize"
+              name="pageSize"
+              [(ngModel)]="pageSize"
+              (ngModelChange)="onPageSizeChange()"
+              class="border border-slate-300 rounded-lg px-2 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="25">25</option>
+              <option [ngValue]="50">50</option>
+
+            </select>
+          </div>
+
+          <!-- Previous Button -->
+          <button
+            type="button"
+            (click)="previousPage()"
+            [disabled]="currentPage === 1 || totalPages === 0"
+            class="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+            Previous
+          </button>
+
+          <!-- Page Numbers -->
+          @for (page of pageNumbers; track page) {
+            <button
+              type="button"
+              (click)="goToPage(page)"
+              [class]="currentPage === page
+                ? 'px-3 py-2 rounded-lg bg-blue-600 text-white text-sm'
+                : 'px-3 py-2 rounded-lg border border-slate-300 text-slate-600 text-sm hover:bg-slate-50'">
+              {{ page }}
+            </button>
+          }
+
+          <!-- Next Button -->
+          <button
+            type="button"
+            (click)="nextPage()"
+            [disabled]="currentPage >= totalPages || totalPages === 0"
+            class="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+            Next
+          </button>
+
+        </div>
+      </div>
     </div>
 
   </div>
