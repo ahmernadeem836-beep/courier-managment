@@ -11,6 +11,7 @@
     </div>
 
     <button
+      type="button"
       (click)="openForm()"
       class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition">
       + Add New Merchant
@@ -40,7 +41,119 @@
 
   </div>
 
-  <!-- Merchant Listing -->
+  <!-- Pending Applications -->
+  <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
+
+    <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800">Pending Applications</h2>
+        <p class="text-sm text-slate-500 mt-1">
+          Review and manage new merchant applications.
+        </p>
+      </div>
+
+      <span class="bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full text-xs font-semibold">
+        {{ pendingCount }} Pending
+      </span>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+
+        <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+          <tr>
+            <th class="px-6 py-4">Business Name</th>
+            <th class="px-6 py-4">Contact Person</th>
+            <th class="px-6 py-4">Email</th>
+            <th class="px-6 py-4">Phone</th>
+            <th class="px-6 py-4">City</th>
+            <th class="px-6 py-4">Submitted</th>
+            <th class="px-6 py-4">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-slate-100">
+
+          @for (application of pendingApplications; track application.id) {
+            <tr class="hover:bg-slate-50 transition">
+
+              <td class="px-6 py-4">
+                <p class="font-semibold text-slate-800">
+                  {{ application.businessName }}
+                </p>
+                <p class="text-xs text-slate-400 mt-1">
+                  {{ application.businessType }}
+                </p>
+              </td>
+
+              <td class="px-6 py-4 text-slate-700">
+                {{ application.contactPerson }}
+              </td>
+
+              <td class="px-6 py-4 text-slate-600">
+                {{ application.email }}
+              </td>
+
+              <td class="px-6 py-4 text-slate-600">
+                {{ application.phone }}
+              </td>
+
+              <td class="px-6 py-4 text-slate-600">
+                {{ application.businessCity }}
+              </td>
+
+              <td class="px-6 py-4 text-slate-500">
+                {{ application.submittedAt | date:'dd MMM yyyy' }}
+              </td>
+
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+
+                  <button
+                    type="button"
+                    (click)="viewApplication(application)"
+                    class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
+                    View
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="approveApplication(application)"
+                    class="text-emerald-600 hover:text-emerald-800 font-semibold text-xs">
+                    Approve
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="rejectApplication(application)"
+                    class="text-red-600 hover:text-red-800 font-semibold text-xs">
+                    Reject
+                  </button>
+
+                </div>
+              </td>
+
+            </tr>
+          }
+
+          @if (pendingApplications.length === 0) {
+            <tr>
+              <td colspan="7" class="text-center py-10 text-slate-400">
+                <p class="font-medium">No pending applications found.</p>
+                <p class="text-xs mt-1">
+                  New merchant applications will appear here.
+                </p>
+              </td>
+            </tr>
+          }
+
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- All Merchants -->
   <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
 
     <div class="p-5 border-b border-slate-200">
@@ -57,11 +170,13 @@
 
           <input
             type="text"
+            name="searchTerm"
             [(ngModel)]="searchTerm"
             placeholder="Search merchant, contact or city..."
             class="border border-slate-300 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-72">
 
           <select
+            name="statusFilter"
             [(ngModel)]="statusFilter"
             class="border border-slate-300 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
             <option value="All">All Status</option>
@@ -73,7 +188,7 @@
       </div>
     </div>
 
-    <!-- Table -->
+    <!-- Merchant Table -->
     <div class="overflow-x-auto">
       <table class="w-full text-sm text-left">
 
@@ -129,6 +244,7 @@
 
               <td class="px-6 py-4">
                 <button
+                  type="button"
                   (click)="toggleStatus(merchant)"
                   class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
                   {{ merchant.is_active ? 'Deactivate' : 'Activate' }}
@@ -293,6 +409,281 @@
           </div>
 
         </form>
+
+      </div>
+    </div>
+  }
+
+  <!-- Application Details Modal -->
+  @if (showApplicationDetails && selectedApplication; as application) {
+    <div class="fixed inset-0 z-[60] bg-slate-950/50 flex items-center justify-center p-4">
+
+      <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-6 border-b border-slate-200">
+          <div>
+            <h2 class="text-xl font-bold text-slate-800">
+              Application Details
+            </h2>
+            <p class="text-sm text-slate-500 mt-1">
+              {{ application.businessName }}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            (click)="closeApplicationDetails()"
+            class="text-slate-400 hover:text-slate-700 text-2xl">
+            &times;
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 space-y-7">
+
+          <!-- Business Information -->
+          <section>
+            <h3 class="font-bold text-slate-800 mb-4">Business Information</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+
+              <div>
+                <p class="text-slate-400">Business Name</p>
+                <p class="font-semibold text-slate-800">{{ application.businessName }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Business Type</p>
+                <p class="font-semibold text-slate-800">{{ application.businessType }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Business Category</p>
+                <p class="font-semibold text-slate-800">{{ application.businessCategory }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Registration Number</p>
+                <p class="font-semibold text-slate-800">{{ application.registrationNumber || 'N/A' }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Website</p>
+                <p class="font-semibold text-slate-800">{{ application.website || 'N/A' }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Social Media</p>
+                <p class="font-semibold text-slate-800">{{ application.socialMedia || 'N/A' }}</p>
+              </div>
+
+              <div class="sm:col-span-2">
+                <p class="text-slate-400">Business Description</p>
+                <p class="font-semibold text-slate-800">{{ application.businessDescription || 'N/A' }}</p>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- Shipping Information -->
+          <section class="border-t border-slate-100 pt-6">
+            <h3 class="font-bold text-slate-800 mb-4">Shipping Information</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+
+              <div>
+                <p class="text-slate-400">Daily Shipments</p>
+                <p class="font-semibold text-slate-800">{{ application.averageShipmentsPerDay }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Monthly Shipments</p>
+                <p class="font-semibold text-slate-800">{{ application.averageShipmentsPerMonth || 'N/A' }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Current Courier Partner</p>
+                <p class="font-semibold text-slate-800">{{ application.currentCourierPartner || 'N/A' }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Shipping Coverage</p>
+                <p class="font-semibold text-slate-800">{{ application.shippingCoverage }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Shipping Cities</p>
+                <p class="font-semibold text-slate-800">{{ application.shippingCities || 'N/A' }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Pickup Required</p>
+                <p class="font-semibold text-slate-800">{{ application.pickupRequired }}</p>
+              </div>
+
+              <div class="sm:col-span-2">
+                <p class="text-slate-400">Pickup Address</p>
+                <p class="font-semibold text-slate-800">{{ application.pickupAddress || 'N/A' }}</p>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- Payment Information -->
+          <section class="border-t border-slate-100 pt-6">
+            <h3 class="font-bold text-slate-800 mb-4">Payment & COD Information</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+
+              <div>
+                <p class="text-slate-400">Payment Method</p>
+                <p class="font-semibold text-slate-800">{{ application.paymentMethod }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Expected COD Volume</p>
+                <p class="font-semibold text-slate-800">{{ application.expectedCodVolume || 'N/A' }}</p>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- Contact Information -->
+          <section class="border-t border-slate-100 pt-6">
+            <h3 class="font-bold text-slate-800 mb-4">Contact Information</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+
+              <div>
+                <p class="text-slate-400">Contact Person</p>
+                <p class="font-semibold text-slate-800">{{ application.contactPerson }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Email</p>
+                <p class="font-semibold text-slate-800">{{ application.email }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Primary Phone</p>
+                <p class="font-semibold text-slate-800">{{ application.phone }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Alternate Phone</p>
+                <p class="font-semibold text-slate-800">{{ application.alternatePhone || 'N/A' }}</p>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- Business Address -->
+          <section class="border-t border-slate-100 pt-6">
+            <h3 class="font-bold text-slate-800 mb-4">Business Address</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+
+              <div class="sm:col-span-2">
+                <p class="text-slate-400">Complete Address</p>
+                <p class="font-semibold text-slate-800">{{ application.businessAddress }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">City</p>
+                <p class="font-semibold text-slate-800">{{ application.businessCity }}</p>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- Return Address -->
+          <section class="border-t border-slate-100 pt-6">
+            <h3 class="font-bold text-slate-800 mb-4">Return Address</h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+
+              <div class="sm:col-span-2">
+                <p class="text-slate-400">Complete Address</p>
+                <p class="font-semibold text-slate-800">{{ application.returnAddress }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Return City</p>
+                <p class="font-semibold text-slate-800">{{ application.returnCity }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Area / Postal Code</p>
+                <p class="font-semibold text-slate-800">{{ application.returnArea }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Return Contact Person</p>
+                <p class="font-semibold text-slate-800">{{ application.returnContactPerson }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Return Contact Number</p>
+                <p class="font-semibold text-slate-800">{{ application.returnContactNumber }}</p>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- Application Metadata -->
+          <section class="border-t border-slate-100 pt-6">
+            <h3 class="font-bold text-slate-800 mb-3">Application Information</h3>
+
+            <div class="flex flex-wrap gap-4 text-sm">
+              <div>
+                <p class="text-slate-400">Application ID</p>
+                <p class="font-semibold text-slate-800">{{ application.id }}</p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Submitted At</p>
+                <p class="font-semibold text-slate-800">
+                  {{ application.submittedAt | date:'dd MMM yyyy, hh:mm a' }}
+                </p>
+              </div>
+
+              <div>
+                <p class="text-slate-400">Status</p>
+                <span class="inline-block mt-1 bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-semibold">
+                  {{ application.status }}
+                </span>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex flex-wrap justify-end gap-3 p-6 border-t border-slate-200">
+
+          <button
+            type="button"
+            (click)="closeApplicationDetails()"
+            class="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm font-semibold">
+            Close
+          </button>
+
+          <button
+            type="button"
+            (click)="rejectApplication(application)"
+            class="px-5 py-2.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 text-sm font-semibold">
+            Reject Application
+          </button>
+
+          <button
+            type="button"
+            (click)="approveApplication(application)"
+            class="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
+            Approve Application
+          </button>
+
+        </div>
 
       </div>
     </div>

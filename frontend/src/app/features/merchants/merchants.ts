@@ -1,6 +1,6 @@
-
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 
 interface Merchant {
   merchant_id: number;
@@ -13,13 +13,46 @@ interface Merchant {
   is_active: boolean;
 }
 
+interface MerchantApplication {
+  id: number;
+  businessName: string;
+  businessType: string;
+  businessCategory: string;
+  website: string;
+  socialMedia: string;
+  registrationNumber: string;
+  businessDescription: string;
+  averageShipmentsPerDay: string;
+  averageShipmentsPerMonth: string;
+  currentCourierPartner: string;
+  shippingCoverage: string;
+  shippingCities: string;
+  pickupRequired: string;
+  pickupAddress: string;
+  paymentMethod: string;
+  expectedCodVolume: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  alternatePhone: string;
+  businessAddress: string;
+  businessCity: string;
+  returnAddress: string;
+  returnCity: string;
+  returnArea: string;
+  returnContactPerson: string;
+  returnContactNumber: string;
+  status: 'Pending Approval' | 'Approved' | 'Rejected';
+  submittedAt: string;
+}
+
 @Component({
   selector: 'app-merchants',
-  imports: [FormsModule],
+  imports: [FormsModule, DatePipe],
   templateUrl: './merchants.html',
   styleUrl: './merchants.css',
 })
-export class Merchants {
+export class Merchants implements OnInit {
 
   merchants: Merchant[] = [
     {
@@ -54,11 +87,68 @@ export class Merchants {
     }
   ];
 
+  applications: MerchantApplication[] = [];
+
   searchTerm = '';
   statusFilter = 'All';
   showForm = false;
 
+  showApplicationDetails = false;
+  selectedApplication: MerchantApplication | null = null;
+
   newMerchant: Merchant = this.getEmptyMerchant();
+
+  ngOnInit(): void {
+    this.loadMerchants();
+    this.loadApplications();
+  }
+
+  loadMerchants(): void {
+    try {
+      const saved = localStorage.getItem('admin_merchants');
+
+      if (saved) {
+        this.merchants = JSON.parse(saved);
+      }
+    } catch {
+      console.error('Unable to load merchants.');
+    }
+  }
+
+  loadApplications(): void {
+    try {
+      this.applications = JSON.parse(
+        localStorage.getItem('merchant_applications') || '[]'
+      );
+    } catch {
+      this.applications = [];
+      console.error('Unable to load merchant applications.');
+    }
+  }
+
+  saveApplications(): void {
+    localStorage.setItem(
+      'merchant_applications',
+      JSON.stringify(this.applications)
+    );
+  }
+
+  saveMerchants(): void {
+    localStorage.setItem(
+      'admin_merchants',
+      JSON.stringify(this.merchants)
+    );
+  }
+
+  get pendingApplications(): MerchantApplication[] {
+    return this.applications.filter(
+      application => application.status === 'Pending Approval'
+    );
+  }
+
+  get pendingCount(): number {
+    return this.pendingApplications.length;
+  }
 
   get totalMerchants(): number {
     return this.merchants.length;
@@ -89,6 +179,71 @@ export class Merchants {
 
       return matchesSearch && matchesStatus;
     });
+  }
+
+  viewApplication(application: MerchantApplication): void {
+    this.selectedApplication = application;
+    this.showApplicationDetails = true;
+  }
+
+  closeApplicationDetails(): void {
+    this.selectedApplication = null;
+    this.showApplicationDetails = false;
+  }
+
+  approveApplication(application: MerchantApplication): void {
+    const alreadyExists = this.merchants.some(
+      merchant =>
+        merchant.email.toLowerCase() ===
+        application.email.toLowerCase()
+    );
+
+    if (alreadyExists) {
+      alert('A merchant with this email already exists.');
+      return;
+    }
+
+    const merchant: Merchant = {
+      merchant_id:
+        Math.max(0, ...this.merchants.map(m => m.merchant_id)) + 1,
+
+      name: application.businessName,
+      contact_person: application.contactPerson,
+      email: application.email,
+      phone: application.phone,
+      address: application.businessAddress,
+      city: application.businessCity,
+      is_active: true
+    };
+
+    this.merchants.unshift(merchant);
+
+    application.status = 'Approved';
+
+    this.saveMerchants();
+    this.saveApplications();
+
+    this.closeApplicationDetails();
+
+    alert('Merchant application approved successfully.');
+  }
+
+  rejectApplication(application: MerchantApplication): void {
+    const confirmed = confirm(
+      `Are you sure you want to reject ${application.businessName}?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    application.status = 'Rejected';
+
+    this.saveApplications();
+
+    this.closeApplicationDetails();
+
+    alert('Merchant application rejected.');
   }
 
   getEmptyMerchant(): Merchant {
@@ -127,7 +282,8 @@ export class Merchants {
 
     const duplicateEmail = this.merchants.some(
       merchant =>
-        merchant.email.toLowerCase() === this.newMerchant.email.trim().toLowerCase()
+        merchant.email.toLowerCase() ===
+        this.newMerchant.email.trim().toLowerCase()
     );
 
     if (duplicateEmail) {
@@ -137,20 +293,18 @@ export class Merchants {
 
     const merchant: Merchant = {
       ...this.newMerchant,
-      merchant_id: Math.max(0, ...this.merchants.map(m => m.merchant_id)) + 1,
-      name: this.newMerchant.name.trim(),
-      contact_person: this.newMerchant.contact_person.trim(),
-      email: this.newMerchant.email.trim(),
-      phone: this.newMerchant.phone.trim(),
-      address: this.newMerchant.address.trim(),
-      city: this.newMerchant.city.trim()
+      merchant_id:
+        Math.max(0, ...this.merchants.map(m => m.merchant_id)) + 1
     };
 
     this.merchants.unshift(merchant);
+
+    this.saveMerchants();
     this.closeForm();
   }
 
   toggleStatus(merchant: Merchant): void {
     merchant.is_active = !merchant.is_active;
+    this.saveMerchants();
   }
 }

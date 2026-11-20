@@ -3,7 +3,9 @@ import { Routes } from '@angular/router';
 
 // Authentication
 import { Login } from './features/auth/login/login';
+import { MerchantRegister } from './features/auth/merchant-register/merchant-register';
 import { authGuard } from './core/guards/auth-guard';
+import { guestGuard } from './core/guards/guest-guard';
 
 // Internal Portal
 import { MainLayout } from './layouts/main-layout/main-layout';
@@ -22,7 +24,7 @@ import { Branches } from './features/branches/branches';
 import { Merchants } from './features/merchants/merchants';
 import { Customers } from './features/customers/customers';
 import { Reports } from './features/reports/reports';
-import { guestGuard } from './core/guards/guest-guard';
+
 // Merchant Portal
 import { MerchantLayout } from './layouts/merchant-layout/merchant-layout';
 import { Dashboard as MerchantDashboard } from './features/merchant/dashboard/dashboard';
@@ -36,7 +38,14 @@ export const routes: Routes = [
   // Login
   {
     path: 'login',
-    component: Login
+    component: Login,
+    canActivate: [guestGuard]
+  },
+
+  // Public Merchant Registration
+  {
+    path: 'merchant/register',
+    component: MerchantRegister
   },
 
   // Default route
@@ -71,11 +80,6 @@ export const routes: Routes = [
         canActivate: [authGuard],
         data: { module: 'shipment-tracking' }
       },
-      { 
-  path: 'login', 
-  component: Login, 
-  canActivate: [guestGuard] 
-},
       {
         path: 'pickups',
         component: Pickups,
