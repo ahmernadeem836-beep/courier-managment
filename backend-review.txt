@@ -1,0 +1,721 @@
+
+========== backend\src\server.ts ==========
+
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import pool from "./config/database.js";
+
+import authRoutes from "./routes/auth.routes.js";
+import usersRoutes from "./routes/users.routes.js";
+import rolesRoutes from "./routes/roles.routes.js";
+import branchesRoutes from "./routes/branches.routes.js";
+import merchantCustomerRoutes from "./routes/merchant-customer.routes.js";
+import shipmentsRoutes from "./routes/shipments.routes.js";
+
+import { authenticateToken } from "./middleware/auth.middleware.js";
+import { requirePermission } from "./middleware/permission.middleware.js";
+
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./config/swagger.js";
+
+dotenv.config();
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// Swagger Documentation
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+// API Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/users", usersRoutes);
+app.use("/api/roles", rolesRoutes);
+app.use("/api/branches", branchesRoutes);
+app.use("/api", merchantCustomerRoutes);
+app.use("/api/shipments", shipmentsRoutes);
+
+// Home Route
+app.get("/", (req, res) => {
+    res.json({
+        message: "Courier Management API is running!"
+    });
+});
+
+// Database Health Check
+app.get("/api/health/db", async (req, res) => {
+    try {
+        const connection = await pool.getConnection();
+        connection.release();
+
+        res.json({
+            message: "MySQL connected successfully!"
+        });
+    } catch (error) {
+        console.error("Database connection failed:", error);
+
+        res.status(500).json({
+            message: "MySQL connection failed!"
+        });
+    }
+});
+
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   get:
+ *     summary: Get authenticated user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile retrieved successfully
+ *       401:
+ *         description: Authentication required
+ *       500:
+ *         description: Server error
+ */
+app.get("/api/auth/profile", authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user?.userId;
+
+        if (!userId) {
+            return res.status(401).json({
+                message: "User authentication required"
+            });
+        }
+
+        const [rows] = await pool.execute(
+            `SELECT user_id, full_name, email, phone
+             FROM users
+             WHERE user_id = ? AND is_active = TRUE`,
+            [userId]
+        );
+
+        return res.json({
+            message: "Authenticated successfully",
+            user: rows
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Could not fetch profile"
+        });
+    }
+});
+
+/**
+ * @swagger
+ * /api/auth/check-permission:
+ *   get:
+ *     summary: Check user permission
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Permission granted
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Permission denied
+ */
+app.get(
+    "/api/auth/check-permission",
+    authenticateToken,
+    requirePermission("view_users"),
+    (req, res) => {
+        res.json({
+            message: "Permission granted!",
+            permission: "view_users"
+        });
+    }
+);
+
+// Start Server
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+
+========== backend\src\config\database.ts ==========
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const pool = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: Number(process.env.DB_PORT) || 3306,
+    waitForConnections: true,
+    connectionLimit: 10
+});
+
+export default pool;
+
+========== backend\src\controllers\merchant-customer.controller.ts ==========
+
+import type { Request, Response } from "express";
+import type { RowDataPacket, ResultSetHeader } from "mysql2";
+import pool from "../config/database.js";
+
+interface MerchantRow extends RowDataPacket {
+    merchant_id: number;
+    user_id: number | null;
+    business_name: string;
+    contact_person: string;
+    email: string;
+    phone: string;
+    pickup_address: string;
+    city: string;
+    is_active: number;
+}
+
+interface CustomerRow extends RowDataPacket {
+    customer_id: number;
+    user_id: number | null;
+    full_name: string;
+    email: string | null;
+    phone: string;
+    address: string;
+    city: string;
+    is_active: number;
+}
+
+// ---------------- MERCHANTS ----------------
+
+// GET ALL MERCHANTS
+export const getAllMerchants = async (_req: Request, res: Response) => {
+    try {
+        const [rows] = await pool.execute<MerchantRow[]>(
+            `SELECT * FROM merchants ORDER BY merchant_id DESC`
+        );
+        return res.status(200).json({ count: rows.length, merchants: rows });
+    } catch (error) {
+        console.error("Get merchants error:", error);
+        return res.status(500).json({ message: "Failed to fetch merchants" });
+    }
+};
+
+// GET MERCHANT BY ID
+export const getMerchantById = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({ message: "Invalid merchant ID" });
+        }
+
+        const [rows] = await pool.execute<MerchantRow[]>(
+            "SELECT * FROM merchants WHERE merchant_id = ?",
+            [id]
+        );
+
+        if (!rows[0]) return res.status(404).json({ message: "Merchant not found" });
+        return res.status(200).json({ merchant: rows[0] });
+    } catch (error) {
+        console.error("Get merchant error:", error);
+        return res.status(500).json({ message: "Failed to fetch merchant" });
+    }
+};
+
+// CREATE MERCHANT
+export const createMerchant = async (req: Request, res: Response) => {
+    try {
+        const {
+            user_id, business_name, contact_person,
+            email, phone, pickup_address, city
+        } = req.body;
+
+        if (
+            typeof business_name !== "string" || !business_name.trim() ||
+            typeof contact_person !== "string" || !contact_person.trim() ||
+            typeof email !== "string" || !email.trim() ||
+            typeof phone !== "string" || !phone.trim() ||
+            typeof pickup_address !== "string" || !pickup_address.trim() ||
+            typeof city !== "string" || !city.trim()
+        ) {
+            return res.status(400).json({
+                message: "Business name, contact person, email, phone, pickup address and city are required"
+            });
+        }
+
+        if (user_id != null && (!Number.isInteger(user_id) || user_id <= 0)) {
+            return res.status(400).json({ message: "Invalid user_id" });
+        }
+
+        const [result] = await pool.execute<ResultSetHeader>(
+            `INSERT INTO merchants
+            (user_id, business_name, contact_person, email, phone, pickup_address, city)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+                user_id ?? null, business_name.trim(), contact_person.trim(),
+                email.trim().toLowerCase(), phone.trim(),
+                pickup_address.trim(), city.trim()
+            ]
+        );
+
+        return res.status(201).json({
+            message: "Merchant created successfully",
+            merchant_id: result.insertId
+        });
+    } catch (error) {
+        if ((error as { code?: string }).code === "ER_DUP_ENTRY") {
+            return res.status(409).json({
+                message: "Email or linked user already exists"
+            });
+        }
+        console.error("Create merchant error:", error);
+        return res.status(500).json({ message: "Failed to create merchant" });
+    }
+};
+
+// UPDATE MERCHANT
+export const updateMerchant = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        const {
+            business_name, contact_person,
+            email, phone, pickup_address, city
+        } = req.body;
+
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({ message: "Invalid merchant ID" });
+        }
+
+        if (
+            typeof business_name !== "string" || !business_name.trim() ||
+            typeof contact_person !== "string" || !contact_person.trim() ||
+            typeof email !== "string" || !email.trim() ||
+            typeof phone !== "string" || !phone.trim() ||
+            typeof pickup_address !== "string" || !pickup_address.trim() ||
+            typeof city !== "string" || !city.trim()
+        ) {
+            return res.status(400).json({ message: "All merchant fields are required" });
+        }
+
+        const [existing] = await pool.execute<MerchantRow[]>(
+            "SELECT merchant_id FROM merchants WHERE merchant_id = ?",
+            [id]
+        );
+        if (!existing[0]) return res.status(404).json({ message: "Merchant not found" });
+
+        await pool.execute(
+            `UPDATE merchants
+             SET business_name = ?, contact_person = ?, email = ?,
+                 phone = ?, pickup_address = ?, city = ?
+             WHERE merchant_id = ?`,
+            [
+                business_name.trim(), contact_person.trim(),
+                email.trim().toLowerCase(), phone.trim(),
+                pickup_address.trim(), city.trim(), id
+            ]
+        );
+
+        return res.status(200).json({ message: "Merchant updated successfully" });
+    } catch (error) {
+        if ((error as { code?: string }).code === "ER_DUP_ENTRY") {
+            return res.status(409).json({ message: "Email already exists" });
+        }
+        console.error("Update merchant error:", error);
+        return res.status(500).json({ message: "Failed to update merchant" });
+    }
+};
+
+// DEACTIVATE MERCHANT
+export const deactivateMerchant = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({ message: "Invalid merchant ID" });
+        }
+
+        const [rows] = await pool.execute<MerchantRow[]>(
+            "SELECT merchant_id, is_active FROM merchants WHERE merchant_id = ?",
+            [id]
+        );
+
+        if (!rows[0]) return res.status(404).json({ message: "Merchant not found" });
+        if (!rows[0].is_active) {
+            return res.status(400).json({ message: "Merchant is already inactive" });
+        }
+
+        await pool.execute(
+            "UPDATE merchants SET is_active = FALSE WHERE merchant_id = ?",
+            [id]
+        );
+
+        return res.status(200).json({ message: "Merchant deactivated successfully" });
+    } catch (error) {
+        console.error("Deactivate merchant error:", error);
+        return res.status(500).json({ message: "Failed to deactivate merchant" });
+    }
+};
+
+// ---------------- CUSTOMERS ----------------
+
+// GET ALL CUSTOMERS
+export const getAllCustomers = async (_req: Request, res: Response) => {
+    try {
+        const [rows] = await pool.execute<CustomerRow[]>(
+            `SELECT * FROM customers ORDER BY customer_id DESC`
+        );
+        return res.status(200).json({ count: rows.length, customers: rows });
+    } catch (error) {
+        console.error("Get customers error:", error);
+        return res.status(500).json({ message: "Failed to fetch customers" });
+    }
+};
+
+// GET CUSTOMER BY ID
+export const getCustomerById = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({ message: "Invalid customer ID" });
+        }
+
+        const [rows] = await pool.execute<CustomerRow[]>(
+            "SELECT * FROM customers WHERE customer_id = ?",
+            [id]
+        );
+
+        if (!rows[0]) return res.status(404).json({ message: "Customer not found" });
+        return res.status(200).json({ customer: rows[0] });
+    } catch (error) {
+        console.error("Get customer error:", error);
+        return res.status(500).json({ message: "Failed to fetch customer" });
+    }
+};
+
+// CREATE CUSTOMER
+export const createCustomer = async (req: Request, res: Response) => {
+    try {
+        const { user_id, full_name, email, phone, address, city } = req.body;
+
+        if (
+            typeof full_name !== "string" || !full_name.trim() ||
+            typeof phone !== "string" || !phone.trim() ||
+            typeof address !== "string" || !address.trim() ||
+            typeof city !== "string" || !city.trim()
+        ) {
+            return res.status(400).json({
+                message: "Full name, phone, address and city are required"
+            });
+        }
+
+        if (email != null && (typeof email !== "string" || !email.trim())) {
+            return res.status(400).json({ message: "Invalid email" });
+        }
+
+        if (user_id != null && (!Number.isInteger(user_id) || user_id <= 0)) {
+            return res.status(400).json({ message: "Invalid user_id" });
+        }
+
+        const [result] = await pool.execute<ResultSetHeader>(
+            `INSERT INTO customers
+            (user_id, full_name, email, phone, address, city)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+                user_id ?? null, full_name.trim(),
+                email?.trim().toLowerCase() || null,
+                phone.trim(), address.trim(), city.trim()
+            ]
+        );
+
+        return res.status(201).json({
+            message: "Customer created successfully",
+            customer_id: result.insertId
+        });
+    } catch (error) {
+        if ((error as { code?: string }).code === "ER_DUP_ENTRY") {
+            return res.status(409).json({
+                message: "Email or linked user already exists"
+            });
+        }
+        console.error("Create customer error:", error);
+        return res.status(500).json({ message: "Failed to create customer" });
+    }
+};
+
+// UPDATE CUSTOMER
+export const updateCustomer = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        const { full_name, email, phone, address, city } = req.body;
+
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({ message: "Invalid customer ID" });
+        }
+
+        if (
+            typeof full_name !== "string" || !full_name.trim() ||
+            typeof phone !== "string" || !phone.trim() ||
+            typeof address !== "string" || !address.trim() ||
+            typeof city !== "string" || !city.trim()
+        ) {
+            return res.status(400).json({ message: "Name, phone, address and city are required" });
+        }
+
+        const [existing] = await pool.execute<CustomerRow[]>(
+            "SELECT customer_id FROM customers WHERE customer_id = ?",
+            [id]
+        );
+        if (!existing[0]) return res.status(404).json({ message: "Customer not found" });
+
+        await pool.execute(
+            `UPDATE customers
+             SET full_name = ?, email = ?, phone = ?, address = ?, city = ?
+             WHERE customer_id = ?`,
+            [
+                full_name.trim(), email?.trim().toLowerCase() || null,
+                phone.trim(), address.trim(), city.trim(), id
+            ]
+        );
+
+        return res.status(200).json({ message: "Customer updated successfully" });
+    } catch (error) {
+        if ((error as { code?: string }).code === "ER_DUP_ENTRY") {
+            return res.status(409).json({ message: "Email already exists" });
+        }
+        console.error("Update customer error:", error);
+        return res.status(500).json({ message: "Failed to update customer" });
+    }
+};
+
+// DEACTIVATE CUSTOMER
+export const deactivateCustomer = async (req: Request, res: Response) => {
+    try {
+        const id = Number(req.params.id);
+        if (!Number.isInteger(id) || id <= 0) {
+            return res.status(400).json({ message: "Invalid customer ID" });
+        }
+
+        const [rows] = await pool.execute<CustomerRow[]>(
+            "SELECT customer_id, is_active FROM customers WHERE customer_id = ?",
+            [id]
+        );
+
+        if (!rows[0]) return res.status(404).json({ message: "Customer not found" });
+        if (!rows[0].is_active) {
+            return res.status(400).json({ message: "Customer is already inactive" });
+        }
+
+        await pool.execute(
+            "UPDATE customers SET is_active = FALSE WHERE customer_id = ?",
+            [id]
+        );
+
+        return res.status(200).json({ message: "Customer deactivated successfully" });
+    } catch (error) {
+        console.error("Deactivate customer error:", error);
+        return res.status(500).json({ message: "Failed to deactivate customer" });
+    }
+};
+
+========== backend\src\routes\merchant-customer.routes.ts ==========
+
+import { Router } from "express";
+
+import {
+    getAllMerchants,
+    getMerchantById,
+    createMerchant,
+    updateMerchant,
+    deactivateMerchant,
+    getAllCustomers,
+    getCustomerById,
+    createCustomer,
+    updateCustomer,
+    deactivateCustomer
+} from "../controllers/merchant-customer.controller.js";
+
+import { authenticateToken } from "../middleware/auth.middleware.js";
+import { requirePermission } from "../middleware/permission.middleware.js";
+
+const router = Router();
+
+router.use(authenticateToken);
+
+// Merchant APIs
+router.get("/merchants", requirePermission("view_merchants"), getAllMerchants);
+router.get("/merchants/:id", requirePermission("view_merchants"), getMerchantById);
+router.post("/merchants", requirePermission("create_merchants"), createMerchant);
+router.put("/merchants/:id", requirePermission("update_merchants"), updateMerchant);
+router.patch("/merchants/:id/deactivate", requirePermission("delete_merchants"), deactivateMerchant);
+
+// Customer APIs
+router.get("/customers", requirePermission("view_customers"), getAllCustomers);
+router.get("/customers/:id", requirePermission("view_customers"), getCustomerById);
+router.post("/customers", requirePermission("create_customers"), createCustomer);
+router.put("/customers/:id", requirePermission("update_customers"), updateCustomer);
+router.patch("/customers/:id/deactivate", requirePermission("delete_customers"), deactivateCustomer);
+
+export default router;
+
+========== backend\src\middleware\auth.middleware.ts ==========
+
+import type { Request, Response, NextFunction } from "express";
+import type { RowDataPacket } from "mysql2";
+import jwt from "jsonwebtoken";
+import pool from "../config/database.js";
+
+interface ActiveUserRow extends RowDataPacket {
+    is_active: number;
+}
+
+declare global {
+    namespace Express {
+        interface Request {
+            user?: {
+                userId: number;
+            };
+        }
+    }
+}
+
+export const authenticateToken = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({
+            message: "Authentication token required"
+        });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const secret = process.env.JWT_SECRET;
+
+    if (!token || !secret) {
+        return res.status(401).json({
+            message: "Invalid authentication"
+        });
+    }
+
+    try {
+        const decoded = jwt.verify(token, secret);
+
+        if (
+            typeof decoded !== "object" ||
+            decoded === null ||
+            typeof decoded.userId !== "number" ||
+            !Number.isInteger(decoded.userId) ||
+            decoded.userId <= 0
+        ) {
+            return res.status(401).json({
+                message: "Invalid token payload"
+            });
+        }
+
+        const [rows] = await pool.execute<ActiveUserRow[]>(
+            `SELECT is_active
+             FROM users
+             WHERE user_id = ?
+             LIMIT 1`,
+            [decoded.userId]
+        );
+
+        const user = rows[0];
+
+        if (!user) {
+            return res.status(401).json({
+                message: "User account not found"
+            });
+        }
+
+        if (!user.is_active) {
+            return res.status(403).json({
+                message: "Account is inactive"
+            });
+        }
+
+        req.user = {
+            userId: decoded.userId
+        };
+
+        return next();
+
+    } catch (error) {
+        if (
+            error instanceof jwt.JsonWebTokenError ||
+            error instanceof jwt.TokenExpiredError
+        ) {
+            return res.status(401).json({
+                message: "Invalid or expired token"
+            });
+        }
+
+        console.error("Authentication error:", error);
+
+        return res.status(500).json({
+            message: "Authentication failed"
+        });
+    }
+};
+
+========== backend\src\middleware\permission.middleware.ts ==========
+
+import type { Request, Response, NextFunction } from "express";
+import type { RowDataPacket } from "mysql2";
+import pool from "../config/database.js";
+
+interface PermissionRow extends RowDataPacket {
+    permission_name: string;
+}
+
+export const requirePermission = (permissionName: string) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.user?.userId;
+
+            if (!userId) {
+                return res.status(401).json({
+                    message: "Authentication required"
+                });
+            }
+
+            const [permissions] = await pool.execute<PermissionRow[]>(
+                `SELECT DISTINCT p.permission_name
+                 FROM users u
+                 JOIN user_roles ur ON u.user_id = ur.user_id
+                 JOIN role_permissions rp ON ur.role_id = rp.role_id
+                 JOIN permissions p ON rp.permission_id = p.permission_id
+                 WHERE u.user_id = ?
+                 AND u.is_active = TRUE`,
+                [userId]
+            );
+
+            const hasPermission = permissions.some(
+                permission =>
+                    permission.permission_name === permissionName
+            );
+
+            if (!hasPermission) {
+                return res.status(403).json({
+                    message: "You do not have permission to perform this action"
+                });
+            }
+
+            return next();
+
+        } catch (error) {
+            console.error("Permission check error:", error);
+
+            return res.status(500).json({
+                message: "Permission verification failed"
+            });
+        }
+    };
+};

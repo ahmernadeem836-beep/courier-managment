@@ -11,32 +11,53 @@ import { Auth } from '../../../core/services/auth';
   styleUrl: './login.css',
 })
 export class Login {
-
   email = '';
   password = '';
   showPassword = false;
   errorMessage = '';
+  isLoading = false;
 
   constructor(
     private auth: Auth,
     private router: Router
   ) {}
 
- onLogin(): void {
-  this.errorMessage = '';
+  onLogin(): void {
+    this.errorMessage = '';
 
-  if (!this.email.trim() || !this.password.trim()) {
-    this.errorMessage = 'Please enter your email and password.';
-    return;
+    if (!this.email.trim() || !this.password.trim()) {
+      this.errorMessage = 'Please enter your email and password.';
+      return;
+    }
+
+    if (this.isLoading) {
+      return;
+    }
+
+    this.isLoading = true;
+
+    this.auth.login(this.email, this.password).subscribe({
+      next: () => {
+        this.isLoading = false;
+
+        this.router.navigate([
+          this.auth.getDefaultRoute(),
+        ]);
+      },
+
+      error: (error) => {
+        this.isLoading = false;
+
+        if (error.status === 401) {
+          this.errorMessage = 'Invalid email or password.';
+        } else if (error.status === 403) {
+          this.errorMessage = 'Your account is inactive.';
+        } else {
+          this.errorMessage =
+            error.error?.message ||
+            'Unable to connect to the server. Please try again.';
+        }
+      },
+    });
   }
-
-  const user = this.auth.login(this.email, this.password);
-
-  if (!user) {
-    this.errorMessage = 'Invalid email or password.';
-    return;
-  }
-
-  this.router.navigate([this.auth.getDefaultRoute()]);
-}
 }

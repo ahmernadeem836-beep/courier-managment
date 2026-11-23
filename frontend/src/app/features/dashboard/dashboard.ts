@@ -33,7 +33,10 @@ export class Dashboard {
   get currentRole(): UserRole | null {
     return this.auth.getUserRole();
   }
-
+   
+  get currentUserName(): string {
+  return this.auth.getCurrentUser()?.name ?? 'User';
+}
   get dashboardTitle(): string {
     const titles: Record<UserRole, string> = {
       'Super Admin': 'System Overview',
@@ -45,6 +48,7 @@ export class Dashboard {
       'Finance Officer': 'Finance Overview',
       'Support Agent': 'Support Overview',
       'Merchant': 'Merchant Overview',
+      'Customer': 'Customer Overview',
     };
 
     return this.currentRole
@@ -63,6 +67,7 @@ export class Dashboard {
       'Finance Officer': 'Monitor financial and cash-on-delivery activities.',
       'Support Agent': 'Monitor customer support and shipment inquiries.',
       'Merchant': 'Monitor your shipments and business activities.',
+      'Customer': 'Track your shipments and monitor delivery progress.',
     };
 
     return this.currentRole
@@ -135,6 +140,13 @@ export class Dashboard {
         { title: 'In Transit', value: '35', change: '+8.2%', icon: '🚚', color: 'purple' },
         { title: 'Delivered', value: '100', change: '+15.3%', icon: '✓', color: 'green' },
         { title: 'Pending Deliveries', value: '10', change: '-3.4%', icon: '◷', color: 'orange' },
+      ],
+
+      'Customer': [
+        { title: 'My Shipments', value: '0', change: '0%', icon: '📦', color: 'blue' },
+        { title: 'In Transit', value: '0', change: '0%', icon: '🚚', color: 'purple' },
+        { title: 'Delivered', value: '0', change: '0%', icon: '✓', color: 'green' },
+        { title: 'Pending Deliveries', value: '0', change: '0%', icon: '◷', color: 'orange' },
       ],
     };
 
@@ -238,6 +250,16 @@ export class Dashboard {
           { label: 'Failed', count: 5, percentage: 3 },
         ],
       },
+
+      'Customer': {
+        title: 'My Shipment Overview',
+        items: [
+          { label: 'Delivered', count: 0, percentage: 0 },
+          { label: 'In Transit', count: 0, percentage: 0 },
+          { label: 'Pending', count: 0, percentage: 0 },
+          { label: 'Failed', count: 0, percentage: 0 },
+        ],
+      },
     };
 
     return this.currentRole
@@ -317,11 +339,13 @@ export class Dashboard {
         ? 'Recent Dispatch Shipments'
         : this.currentRole === 'Delivery Rider'
           ? 'Recent Delivery Shipments'
-          : 'Recent Shipments';
+          : this.currentRole === 'Customer'
+            ? 'My Recent Shipments'
+            : 'Recent Shipments';
   }
 
   get viewAllRoute(): string {
-    const routes: Partial<Record<UserRole, string>> = {
+    const routes: Record<UserRole, string> = {
       'Super Admin': '/shipments',
       'Admin': '/shipments',
       'Branch Manager': '/shipments',
@@ -331,10 +355,11 @@ export class Dashboard {
       'Finance Officer': '/reports',
       'Support Agent': '/shipment-tracking',
       'Merchant': '/merchant/shipments',
+      'Customer': '/shipment-tracking',
     };
 
     return this.currentRole
-      ? routes[this.currentRole] ?? '/dashboard'
+      ? routes[this.currentRole]
       : '/dashboard';
   }
 

@@ -1,6 +1,12 @@
 
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import {
+  UsersService,
+  ApiUser,
+  ApiRole,
+  ApiBranch
+} from '../../core/services/users';
 
 interface SystemUser {
   userId: number;
@@ -18,88 +24,96 @@ interface SystemUser {
   templateUrl: './users.html',
   styleUrl: './users.css',
 })
-export class Users {
+export class Users implements OnInit {
+
+  private usersService = inject(UsersService);
 
   searchTerm = '';
   selectedRole = 'All';
   selectedStatus = 'All';
+
   showUserForm = false;
+  loading = false;
+  saving = false;
+  errorMessage = '';
+
+  users: SystemUser[] = [];
+  roles: ApiRole[] = [];
+  branches: ApiBranch[] = [];
 
   userForm = {
     name: '',
     email: '',
     phone: '',
+    password: '',
     role: '',
     branch: '',
   };
 
-  users: SystemUser[] = [
-    {
-      userId: 1,
-      name: 'Ali Ahmed',
-      email: 'ali@courier.com',
-      phone: '03001234567',
-      role: 'Super Admin',
-      branch: 'Head Office',
-      status: 'Active',
-    },
-    {
-      userId: 2,
-      name: 'Usman Malik',
-      email: 'usman@courier.com',
-      phone: '03011234567',
-      role: 'Branch Manager',
-      branch: 'Lahore Main Branch',
-      status: 'Active',
-    },
-    {
-      userId: 3,
-      name: 'Ahmed Khan',
-      email: 'ahmed@courier.com',
-      phone: '03021234567',
-      role: 'Delivery Rider',
-      branch: 'Lahore Main Branch',
-      status: 'Active',
-    },
-    {
-      userId: 4,
-      name: 'Sara Ali',
-      email: 'sara@courier.com',
-      phone: '03031234567',
-      role: 'Warehouse Staff',
-      branch: 'Karachi Branch',
-      status: 'Inactive',
-    },
-    {
-      userId: 5,
-      name: 'Ayesha Noor',
-      email: 'ayesha@courier.com',
-      phone: '03041234567',
-      role: 'Dispatcher',
-      branch: 'Islamabad Branch',
-      status: 'Active',
-    },
-  ];
+  ngOnInit(): void {
+    this.loadUsersModule();
+  }
 
-  roles: string[] = [
-    'Super Admin',
-    'Admin',
-    'Branch Manager',
-    'Warehouse Staff',
-    'Dispatcher',
-    'Delivery Rider',
-    'Finance Officer',
-    'Support Agent',
-    'Customer',
-  ];
+  loadUsersModule(): void {
+    this.loadUsers();
+    this.loadRoles();
+    this.loadBranches();
+  }
 
-  branches: string[] = [
-    'Head Office',
-    'Lahore Main Branch',
-    'Karachi Branch',
-    'Islamabad Branch',
-    'Multan Branch',
-  ];
+  loadUsers(): void {
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.usersService.getUsers().subscribe({
+      next: response => {
+        this.users = response.users.map((user: ApiUser) => ({
+          userId: user.user_id,
+          name: user.full_name,
+          email: user.email,
+          phone: user.phone || '-',
+          role: user.roles?.map(role => role.role_name).join(', ') || 'No Role',
+          branch: user.branch_name || 'Not Assigned',
+          status: Number(user.is_active) === 1 ? 'Active' : 'Inactive',
+        }));
+
+        this.loading = false;
+      },
+      error: error => {
+        this.loading = false;
+        this.errorMessage =
+          error.error?.message || 'Unable to load users.';
+        console.error(error);
+      },
+    });
+  }
+
+  loadRoles(): void {
+    this.usersService.getRoles().subscribe({
+      next: response => {
+        this.roles = response.roles;
+      },
+      error: error => {
+        this.errorMessage =
+          error.error?.message || 'Unable to load roles.';
+        console.error(error);
+      },
+    });
+  }
+
+  loadBranches(): void {
+    this.usersService.getBranches().subscribe({
+      next: response => {
+        this.branches = response.branches.filter(
+          branch => Number(branch.is_active) === 1
+        );
+      },
+      error: error => {
+        this.errorMessage =
+          error.error?.message || 'Unable to load branches.';
+        console.error(error);
+      },
+    });
+  }
 
   get filteredUsers(): SystemUser[] {
     const search = this.searchTerm.toLowerCase().trim();
@@ -112,10 +126,12 @@ export class Users {
         user.role.toLowerCase().includes(search);
 
       const matchesRole =
-        this.selectedRole === 'All' || user.role === this.selectedRole;
+        this.selectedRole === 'All' ||
+        user.role.split(', ').includes(this.selectedRole);
 
       const matchesStatus =
-        this.selectedStatus === 'All' || user.status === this.selectedStatus;
+        this.selectedStatus === 'All' ||
+        user.status === this.selectedStatus;
 
       return matchesSearch && matchesRole && matchesStatus;
     });
@@ -144,11 +160,24 @@ export class Users {
   }
 
   openUserForm(): void {
+    this.errorMessage = '';
     this.showUserForm = true;
   }
 
   closeUserForm(): void {
     this.showUserForm = false;
+    this.resetForm();
+  }
+
+  resetForm(): void {
+    this.userForm = {
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      role: '',
+      branch: '',
+    };
   }
 
   createUser(): void {
@@ -156,6 +185,7 @@ export class Users {
       !this.userForm.name.trim() ||
       !this.userForm.email.trim() ||
       !this.userForm.phone.trim() ||
+      !this.userForm.password ||
       !this.userForm.role ||
       !this.userForm.branch
     ) {
@@ -163,27 +193,36 @@ export class Users {
       return;
     }
 
-    const newUser: SystemUser = {
-      userId: Math.max(0, ...this.users.map(user => user.userId)) + 1,
-      name: this.userForm.name.trim(),
+    if (this.userForm.password.length < 8) {
+      alert('Password must contain at least 8 characters.');
+      return;
+    }
+
+    this.saving = true;
+    this.errorMessage = '';
+
+    const payload = {
+      full_name: this.userForm.name.trim(),
       email: this.userForm.email.trim(),
+      password: this.userForm.password,
       phone: this.userForm.phone.trim(),
-      role: this.userForm.role,
-      branch: this.userForm.branch,
-      status: 'Active',
+      role_id: Number(this.userForm.role),
+      branch_id: Number(this.userForm.branch),
     };
 
-    this.users.unshift(newUser);
-
-    this.userForm = {
-      name: '',
-      email: '',
-      phone: '',
-      role: '',
-      branch: '',
-    };
-
-    this.closeUserForm();
+    this.usersService.createUser(payload).subscribe({
+      next: () => {
+        this.saving = false;
+        this.closeUserForm();
+        this.loadUsers();
+      },
+      error: error => {
+        this.saving = false;
+        this.errorMessage =
+          error.error?.message || 'Unable to create user.';
+        console.error(error);
+      },
+    });
   }
 
   toggleUserStatus(userId: number): void {
@@ -191,6 +230,20 @@ export class Users {
 
     if (!user) return;
 
-    user.status = user.status === 'Active' ? 'Inactive' : 'Active';
+    const request =
+      user.status === 'Active'
+        ? this.usersService.deactivateUser(userId)
+        : this.usersService.activateUser(userId);
+
+    request.subscribe({
+      next: () => {
+        this.loadUsers();
+      },
+      error: error => {
+        this.errorMessage =
+          error.error?.message || 'Unable to update user status.';
+        console.error(error);
+      },
+    });
   }
 }
