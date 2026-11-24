@@ -1,4 +1,3 @@
-<p>branches works!</p>
 
 <div class="space-y-6">
 
@@ -12,30 +11,58 @@
     </div>
 
     <button
+      type="button"
       (click)="openForm()"
-      class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition">
+      [disabled]="loading"
+      class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition">
       + Add New Branch
     </button>
   </div>
+
+  <!-- Messages -->
+  @if (errorMessage) {
+    <div class="bg-red-50 text-red-700 border border-red-200 rounded-lg p-3 text-sm">
+      {{ errorMessage }}
+    </div>
+  }
+
+  @if (successMessage) {
+    <div class="bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg p-3 text-sm">
+      {{ successMessage }}
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading) {
+    <div class="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500">
+      Loading branches...
+    </div>
+  }
 
   <!-- KPI Cards -->
   <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
 
     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <p class="text-sm text-slate-500">Total Branches</p>
-      <h2 class="text-3xl font-bold text-slate-800 mt-2">{{ totalBranches }}</h2>
+      <h2 class="text-3xl font-bold text-slate-800 mt-2">
+        {{ totalBranches }}
+      </h2>
       <p class="text-xs text-slate-400 mt-2">All registered branches</p>
     </div>
 
     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <p class="text-sm text-slate-500">Active Branches</p>
-      <h2 class="text-3xl font-bold text-emerald-600 mt-2">{{ activeBranches }}</h2>
+      <h2 class="text-3xl font-bold text-emerald-600 mt-2">
+        {{ activeBranches }}
+      </h2>
       <p class="text-xs text-slate-400 mt-2">Currently operational</p>
     </div>
 
     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
       <p class="text-sm text-slate-500">Inactive Branches</p>
-      <h2 class="text-3xl font-bold text-red-500 mt-2">{{ inactiveBranches }}</h2>
+      <h2 class="text-3xl font-bold text-red-500 mt-2">
+        {{ inactiveBranches }}
+      </h2>
       <p class="text-xs text-slate-400 mt-2">Currently not operational</p>
     </div>
 
@@ -44,6 +71,7 @@
   <!-- Branch Listing -->
   <div class="bg-white rounded-xl border border-slate-200 shadow-sm">
 
+    <!-- Listing Header -->
     <div class="p-5 border-b border-slate-200">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
@@ -54,6 +82,7 @@
           </p>
         </div>
 
+        <!-- Search and Filter -->
         <div class="flex flex-col sm:flex-row gap-3">
 
           <input
@@ -65,17 +94,20 @@
           <select
             [(ngModel)]="statusFilter"
             class="border border-slate-300 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+
             <option value="All">All Status</option>
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
+
           </select>
 
         </div>
       </div>
     </div>
 
-    <!-- Table -->
+    <!-- Branch Table -->
     <div class="overflow-x-auto">
+
       <table class="w-full text-sm text-left">
 
         <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
@@ -92,66 +124,80 @@
 
         <tbody class="divide-y divide-slate-100">
 
-          @for (branch of filteredBranches; track branch.branch_id) {
-            <tr class="hover:bg-slate-50 transition">
-
-              <td class="px-6 py-4 font-semibold text-slate-800">
-                {{ branch.name }}
-              </td>
-
-              <td class="px-6 py-4">
-                <span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md font-medium">
-                  {{ branch.code }}
-                </span>
-              </td>
-
-              <td class="px-6 py-4 text-slate-600">
-                {{ branch.address }}
-              </td>
-
-              <td class="px-6 py-4 text-slate-600">
-                {{ branch.city }}
-              </td>
-
-              <td class="px-6 py-4 text-slate-600">
-                {{ branch.phone }}
-              </td>
-
-              <td class="px-6 py-4">
-                @if (branch.is_active) {
-                  <span class="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold">
-                    Active
-                  </span>
-                } @else {
-                  <span class="bg-red-50 text-red-700 px-3 py-1 rounded-full text-xs font-semibold">
-                    Inactive
-                  </span>
-                }
-              </td>
-
-              <td class="px-6 py-4">
-                <button
-                  (click)="toggleStatus(branch)"
-                  class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
-                  {{ branch.is_active ? 'Deactivate' : 'Activate' }}
-                </button>
-              </td>
-
-            </tr>
-          }
-
-          @if (filteredBranches.length === 0) {
+          @if (loading) {
             <tr>
               <td colspan="7" class="text-center py-10 text-slate-400">
-                No branches found.
+                Loading branches...
               </td>
             </tr>
+          } @else {
+
+            @for (branch of filteredBranches; track branch.branch_id) {
+
+              <tr class="hover:bg-slate-50 transition">
+
+                <td class="px-6 py-4 font-semibold text-slate-800">
+                  {{ branch.name }}
+                </td>
+
+                <td class="px-6 py-4">
+                  <span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md font-medium">
+                    {{ branch.code }}
+                  </span>
+                </td>
+
+                <td class="px-6 py-4 text-slate-600">
+                  {{ branch.address }}
+                </td>
+
+                <td class="px-6 py-4 text-slate-600">
+                  {{ branch.city }}
+                </td>
+
+                <td class="px-6 py-4 text-slate-600">
+                  {{ branch.phone }}
+                </td>
+
+                <td class="px-6 py-4">
+                  @if (branch.is_active) {
+                    <span class="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold">
+                      Active
+                    </span>
+                  } @else {
+                    <span class="bg-red-50 text-red-700 px-3 py-1 rounded-full text-xs font-semibold">
+                      Inactive
+                    </span>
+                  }
+                </td>
+
+                <td class="px-6 py-4">
+                  <button
+                    type="button"
+                    (click)="toggleStatus(branch)"
+                    class="text-blue-600 hover:text-blue-800 font-semibold text-xs">
+                    {{ branch.is_active ? 'Deactivate' : 'Activate' }}
+                  </button>
+                </td>
+
+              </tr>
+
+            } @empty {
+              <tr>
+                <td colspan="7" class="text-center py-10 text-slate-400">
+                  No branches found.
+                </td>
+              </tr>
+            }
+
           }
 
         </tbody>
+
       </table>
+
     </div>
 
+    <!-- Table Footer -->
     <div class="px-6 py-4 border-t border-slate-100 text-sm text-slate-500">
       Showing {{ filteredBranches.length }} of {{ totalBranches }} branches
     </div>
@@ -160,31 +206,48 @@
 
   <!-- Add Branch Modal -->
   @if (showForm) {
+
     <div class="fixed inset-0 z-50 bg-slate-950/50 flex items-center justify-center p-4">
 
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
 
+        <!-- Modal Header -->
         <div class="flex items-center justify-between p-6 border-b border-slate-200">
+
           <div>
-            <h2 class="text-xl font-bold text-slate-800">Add New Branch</h2>
-            <p class="text-sm text-slate-500 mt-1">Enter the branch information below.</p>
+            <h2 class="text-xl font-bold text-slate-800">
+              Add New Branch
+            </h2>
+
+            <p class="text-sm text-slate-500 mt-1">
+              Enter the branch information below.
+            </p>
           </div>
 
           <button
+            type="button"
             (click)="closeForm()"
+            [disabled]="saving"
             class="text-slate-400 hover:text-slate-700 text-2xl">
             &times;
           </button>
+
         </div>
 
-        <form (ngSubmit)="addBranch()" class="p-6 space-y-5">
+        <!-- Modal Form -->
+        <form
+          (ngSubmit)="addBranch()"
+          #branchForm="ngForm"
+          class="p-6 space-y-5">
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
+            <!-- Branch Name -->
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-2">
                 Branch Name
               </label>
+
               <input
                 type="text"
                 name="name"
@@ -194,10 +257,12 @@
                 class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
+            <!-- Branch Code -->
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-2">
                 Branch Code
               </label>
+
               <input
                 type="text"
                 name="code"
@@ -207,10 +272,12 @@
                 class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
+            <!-- City -->
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-2">
                 City
               </label>
+
               <input
                 type="text"
                 name="city"
@@ -220,10 +287,12 @@
                 class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
+            <!-- Phone -->
             <div>
               <label class="block text-sm font-medium text-slate-700 mb-2">
                 Contact Number
               </label>
+
               <input
                 type="tel"
                 name="phone"
@@ -233,10 +302,12 @@
                 class="w-full border border-slate-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
+            <!-- Address -->
             <div class="sm:col-span-2">
               <label class="block text-sm font-medium text-slate-700 mb-2">
                 Branch Address
               </label>
+
               <textarea
                 name="address"
                 [(ngModel)]="newBranch.address"
@@ -248,7 +319,9 @@
 
           </div>
 
+          <!-- Active Status -->
           <div class="flex items-center gap-3">
+
             <input
               type="checkbox"
               id="branchActive"
@@ -259,21 +332,34 @@
             <label for="branchActive" class="text-sm text-slate-700">
               Set branch as active
             </label>
+
           </div>
 
+          <!-- Form Error -->
+          @if (errorMessage) {
+            <div class="bg-red-50 text-red-700 border border-red-200 rounded-lg p-3 text-sm">
+              {{ errorMessage }}
+            </div>
+          }
+
+          <!-- Form Actions -->
           <div class="flex justify-end gap-3 pt-4 border-t border-slate-200">
 
             <button
               type="button"
               (click)="closeForm()"
-              class="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm font-semibold">
+              [disabled]="saving"
+              class="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm font-semibold disabled:opacity-50">
               Cancel
             </button>
 
             <button
               type="submit"
-              class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">
-              Save Branch
+              [disabled]="saving || branchForm.invalid"
+              class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold">
+
+              {{ saving ? 'Saving...' : 'Save Branch' }}
+
             </button>
 
           </div>
@@ -281,7 +367,9 @@
         </form>
 
       </div>
+
     </div>
+
   }
 
 </div>

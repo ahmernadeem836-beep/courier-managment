@@ -103,13 +103,25 @@ export const createBranch = async (req: Request, res: Response) => {
 };
 
 // UPDATE BRANCH
+
+// UPDATE BRANCH
 export const updateBranch = async (req: Request, res: Response) => {
     try {
         const branchId = Number(req.params.id);
-        const { branch_name, branch_code, address, city, phone } = req.body;
+
+        const {
+            branch_name,
+            branch_code,
+            address,
+            city,
+            phone,
+            is_active
+        } = req.body;
 
         if (!Number.isInteger(branchId) || branchId <= 0) {
-            return res.status(400).json({ message: "Invalid branch ID" });
+            return res.status(400).json({
+                message: "Invalid branch ID"
+            });
         }
 
         if (
@@ -123,40 +135,65 @@ export const updateBranch = async (req: Request, res: Response) => {
             });
         }
 
+        if (typeof is_active !== "boolean") {
+            return res.status(400).json({
+                message: "Valid branch status is required"
+            });
+        }
+
         const [existing] = await pool.execute<BranchRow[]>(
             "SELECT * FROM branches WHERE branch_id = ?",
             [branchId]
         );
 
         if (!existing[0]) {
-            return res.status(404).json({ message: "Branch not found" });
+            return res.status(404).json({
+                message: "Branch not found"
+            });
         }
 
         await pool.execute(
             `UPDATE branches
-             SET branch_name = ?, branch_code = ?, address = ?,
-                 city = ?, phone = ?
+             SET branch_name = ?,
+                 branch_code = ?,
+                 address = ?,
+                 city = ?,
+                 phone = ?,
+                 is_active = ?
              WHERE branch_id = ?`,
             [
                 branch_name.trim(),
                 branch_code.trim().toUpperCase(),
                 address.trim(),
                 city.trim(),
-                typeof phone === "string" && phone.trim() ? phone.trim() : null,
+                typeof phone === "string" && phone.trim()
+                    ? phone.trim()
+                    : null,
+                is_active ? 1 : 0,
                 branchId
             ]
         );
 
-        return res.status(200).json({ message: "Branch updated successfully" });
+        return res.status(200).json({
+            message: "Branch updated successfully"
+        });
+
     } catch (error) {
+
         if ((error as { code?: string }).code === "ER_DUP_ENTRY") {
-            return res.status(409).json({ message: "Branch code already exists" });
+            return res.status(409).json({
+                message: "Branch code already exists"
+            });
         }
 
         console.error("Update branch error:", error);
-        return res.status(500).json({ message: "Failed to update branch" });
+
+        return res.status(500).json({
+            message: "Failed to update branch"
+        });
     }
 };
+
 
 // DEACTIVATE BRANCH
 export const deactivateBranch = async (req: Request, res: Response) => {
