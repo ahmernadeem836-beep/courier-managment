@@ -2,43 +2,11 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-
-interface MerchantApplication {
-  id: number;
-  businessName: string;
-  businessType: string;
-  businessCategory: string;
-  website: string;
-  socialMedia: string;
-  registrationNumber: string;
-  businessDescription: string;
-
-  averageShipmentsPerDay: string;
-  averageShipmentsPerMonth: string;
-  currentCourierPartner: string;
-  shippingCoverage: string;
-  shippingCities: string;
-  pickupRequired: string;
-  pickupAddress: string;
-
-  paymentMethod: string;
-  expectedCodVolume: string;
-
-  contactPerson: string;
-  email: string;
-  phone: string;
-  alternatePhone: string;
-  businessAddress: string;
-  businessCity: string;
-
-  returnAddress: string;
-  returnCity: string;
-  returnArea: string;
-  returnContactPerson: string;
-  returnContactNumber: string;
-
-  status: 'Pending Approval';
-  submittedAt: string;
+import { HttpClient } from '@angular/common/http';
+import { finalize } from 'rxjs';
+interface MerchantApplicationResponse {
+  message: string;
+  status?: string;
 }
 
 @Component({
@@ -52,8 +20,14 @@ export class MerchantRegister {
 
   errorMessage = '';
   successMessage = '';
+  isSubmitting = false;
+
+  private readonly apiUrl =
+    'http://localhost:5000/api/merchant-applications';
 
   form = this.getEmptyForm();
+
+  constructor(private http: HttpClient) {}
 
   private getEmptyForm() {
     return {
@@ -88,6 +62,8 @@ export class MerchantRegister {
       returnArea: '',
       returnContactPerson: '',
       returnContactNumber: '',
+
+      password: '',
     };
   }
 
@@ -108,69 +84,97 @@ export class MerchantRegister {
       this.form.pickupRequired === 'Yes' &&
       !this.form.pickupAddress.trim()
     ) {
-      this.errorMessage = 'Please enter your pickup address.';
-      return;
-    }
-
-    let applications: MerchantApplication[] = [];
-
-    try {
-      applications = JSON.parse(
-        localStorage.getItem('merchant_applications') || '[]'
-      );
-    } catch {
       this.errorMessage =
-        'Unable to read saved applications. Please try again.';
+        'Please enter your pickup address.';
       return;
     }
 
-    const email = this.form.email.trim().toLowerCase();
-
-    const emailExists = applications.some(
-      application => application.email.toLowerCase() === email
-    );
-
-    if (emailExists) {
+    if (this.form.password.length < 8) {
       this.errorMessage =
-        'An application with this email already exists.';
+        'Password must be at least 8 characters long.';
       return;
     }
 
-    const application: MerchantApplication = {
+    const payload = {
       ...this.form,
+
       businessName: this.form.businessName.trim(),
+      businessType: this.form.businessType.trim(),
+      businessCategory: this.form.businessCategory.trim(),
+
+      website: this.form.website.trim(),
+      socialMediaLink: this.form.socialMedia.trim(),
+      registrationNumber: this.form.registrationNumber.trim(),
       businessDescription: this.form.businessDescription.trim(),
+
+      averageShipmentsPerDay:
+        this.form.averageShipmentsPerDay.trim(),
+
+      averageShipmentsPerMonth:
+        this.form.averageShipmentsPerMonth.trim(),
+
+      currentCourierPartner:
+        this.form.currentCourierPartner.trim(),
+
+      shippingCoverage: this.form.shippingCoverage.trim(),
+
+      shippingCities: this.form.shippingCities
+        .split(',')
+        .map(city => city.trim())
+        .filter(city => city.length > 0),
+
+      pickupRequired: this.form.pickupRequired === 'Yes',
+
+      pickupAddress:
+        this.form.pickupRequired === 'Yes'
+          ? this.form.pickupAddress.trim()
+          : '',
+
+      paymentMethod: this.form.paymentMethod.trim(),
+      expectedCodVolume: this.form.expectedCodVolume.trim(),
+
       contactPerson: this.form.contactPerson.trim(),
-      email,
+      email: this.form.email.trim().toLowerCase(),
       phone: this.form.phone.trim(),
+      alternatePhone: this.form.alternatePhone.trim(),
+
       businessAddress: this.form.businessAddress.trim(),
       businessCity: this.form.businessCity.trim(),
+
       returnAddress: this.form.returnAddress.trim(),
       returnCity: this.form.returnCity.trim(),
       returnArea: this.form.returnArea.trim(),
-      returnContactPerson: this.form.returnContactPerson.trim(),
-      returnContactNumber: this.form.returnContactNumber.trim(),
-      status: 'Pending Approval',
-      id: Date.now(),
-      submittedAt: new Date().toISOString(),
+      returnContactPerson:
+        this.form.returnContactPerson.trim(),
+
+      returnContactNumber:
+        this.form.returnContactNumber.trim(),
+
+      password: this.form.password,
     };
 
-    try {
-      applications.push(application);
+    
+this.isSubmitting = true;
 
-      localStorage.setItem(
-        'merchant_applications',
-        JSON.stringify(applications)
-      );
-
-      this.successMessage =
-        'Your merchant application has been submitted successfully. It is now pending admin approval.';
-
+this.http
+  .post<MerchantApplicationResponse>(this.apiUrl, payload)
+  .pipe(
+    finalize(() => {
+      this.isSubmitting = false;
+    })
+  )
+  .subscribe({
+    next: (response) => {
+      this.successMessage = response.message;
       this.form = this.getEmptyForm();
+    },
 
-    } catch {
+    error: (error) => {
       this.errorMessage =
-        'Your application could not be saved. Please try again.';
-    }
+        error.error?.message ||
+        'Unable to submit your application. Please try again.';
+    },
+  });
+
   }
 }

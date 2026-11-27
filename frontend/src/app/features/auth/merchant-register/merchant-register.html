@@ -29,7 +29,8 @@
           <p class="font-semibold">Application Submitted</p>
           <p class="mt-1">{{ successMessage }}</p>
           <p class="mt-2">
-            Our team will review your application. If approved, you will receive an email with an account activation link.
+            Your account will remain inactive until admin approval.
+            You can sign in after your account is activated.
           </p>
         </div>
       }
@@ -513,8 +514,7 @@
                 [(ngModel)]="form.returnContactNumber"
                 required
                 placeholder="03XXXXXXXXX"
-                class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
-            </div>
+                class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></div>
 
           </div>
         </section>
@@ -530,12 +530,30 @@
             </h3>
           </div>
 
+          <div class="mb-5">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+              Create Password *
+            </label>
+
+            <input
+              type="password"
+              name="password"
+              [(ngModel)]="form.password"
+              required
+              minlength="8"
+              placeholder="Minimum 8 characters"
+              class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+          </div>
+
           <div class="rounded-xl border border-blue-100 bg-blue-50 p-4">
             <p class="text-sm font-semibold text-blue-800">
               How will your account be activated?
             </p>
             <p class="mt-2 text-sm leading-6 text-blue-700">
-              After submitting your application, our admin team will review your business details. If approved, an account activation link will be sent to your registered email address. You can use that link to set your password and access the Merchant Portal.
+              Your account will remain inactive after registration.
+              Our admin team will review your application. Once approved,
+              your account will be activated and you can access the
+              Merchant Portal using your registered email and password.
             </p>
           </div>
         </section>
@@ -545,9 +563,15 @@
 
           <button
             type="submit"
-            [disabled]="registrationForm.invalid"
+            [disabled]="registrationForm.invalid || isSubmitting"
             class="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
-            Submit Merchant Application
+
+            @if (isSubmitting) {
+              Submitting...
+            } @else {
+              Submit Merchant Application
+            }
+
           </button>
 
           <p class="mt-5 text-center text-sm text-slate-500">

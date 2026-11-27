@@ -23,6 +23,11 @@ export const authenticateToken = async (
     res: Response,
     next: NextFunction
 ) => {
+    console.log(
+    "[AUTH DEBUG]",
+    req.method,
+    req.originalUrl
+);
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

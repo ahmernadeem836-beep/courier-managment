@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import pool from "./config/database.js";
 
 import type { RowDataPacket } from "mysql2";
-
+import merchantApplicationRoutes from "./routes/merchant-application.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import usersRoutes from "./routes/users.routes.js";
 import rolesRoutes from "./routes/roles.routes.js";
@@ -63,6 +63,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/branches", branchesRoutes);
+app.use("/api/merchant-applications", merchantApplicationRoutes);
 app.use("/api", merchantCustomerRoutes);
 app.use("/api/shipments", shipmentsRoutes);
 
